@@ -21,7 +21,8 @@
 </br>
 
 ``` C++
-#define LODWORD(x)  (*((unsigned int*)&(x))) #define HIDWORD(x)  (*((unsigned int*)&(x)+1)) 
+#define LODWORD(x)  (*((unsigned int*)&(x))) 
+#define HIDWORD(x)  (*((unsigned int*)&(x)+1)) 
  
 unsigned __int64 key[]={     
 0x70573EFEB80C91FE,    
