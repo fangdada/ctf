@@ -1,10 +1,10 @@
 # babyre
 ## Author: fanda
-</br>
+
 &nbsp;&nbsp;&nbsp;&nbsp;这道题很迷,看了几个函数感觉莫名其妙的，还傻傻的去逆了会儿 srand 和 rand 函数。   后来发现其实关键函数就一个。  
-</br>
+
 ![babyre1](https://github.com/fangdada/ctf/blob/master/screenshot/babyre1.png)    
-</br>
+
 &nbsp;&nbsp;&nbsp;&nbsp;中间这个函数跟我们的输入有关，跟进去看看：     
 </br>
 ![babyre2](https://github.com/fangdada/ctf/blob/master/screenshot/babyre2.png)
