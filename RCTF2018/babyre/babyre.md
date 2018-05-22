@@ -15,8 +15,11 @@
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;所以加密函数就是这一个了。考虑到是逐个加密，所以直接爆破就行了。 题目给了我们一个 out 文件，这里面的数据应该就是要复现的密文了，所以我写了以下脚本 爆破：    
 </br>
+
 脚本
-====
+======
+</br>
+
 ``` C++
 #define LODWORD(x)  (*((unsigned int*)&(x))) #define HIDWORD(x)  (*((unsigned int*)&(x)+1)) 
  
