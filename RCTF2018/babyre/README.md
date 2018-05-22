@@ -77,7 +77,7 @@ int main()
 ```   
 瞬间得到flag :)
 </br>
-![babyre4](../../babyre4.png)
+![babyre4](../../screenshot/babyre4.png)
 
 
  
