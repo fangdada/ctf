@@ -2,7 +2,7 @@
 ## Author: fanda
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>题目给了两个文件，其中vm_rel从p.bin读取数据作为程序的流程,我分析了一下然后得到了其大致的原理:</font>
 </br>
-![babyvm1](https://github.com/fangdada/ctf/blob/master/screenshot/babyvm1.png)  
+![babyvm1](../../screenshot/babyvm1.png)  
 <font size=2>
 1.初始偏移，程序从这里开始寻址到0x31。</br>
 2.从0x31取了一个DWORD，也就是0x100，这是 “Input flag:” 提示的偏移。</br>
@@ -132,5 +132,5 @@ int main()
 >瞬间得到flag ：）
 </br>
 
-![babyvm2](https://github.com/fangdada/ctf/blob/master/screenshot/babyvm2.png)
+![babyvm2](../../screenshot/babyvm2.png)
 
