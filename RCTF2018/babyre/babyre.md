@@ -3,15 +3,15 @@
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;这道题很迷,看了几个函数感觉莫名其妙的，还傻傻的去逆了会儿 srand 和 rand 函数。   后来发现其实关键函数就一个。  
 </br>
-![]()    
+![babyre1](https://github.com/fangdada/ctf/blob/master/screenshot/babyre1.png)    
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;中间这个函数跟我们的输入有关，跟进去看看：     
 </br>
-![]()
+![babyre2](https://github.com/fangdada/ctf/blob/master/screenshot/babyre2.png)
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;这里又要求我们输入一个字符串，猜测这循环里面的函数是逐个对我们输入的字节进行加 密，并且把最开始传进来的两个立即数合并了。   
 </br>
-![]()
+![babyre3](https://github.com/fangdada/ctf/blob/master/screenshot/babyre3.png)
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;所以加密函数就是这一个了。考虑到是逐个加密，所以直接爆破就行了。 题目给了我们一个 out 文件，这里面的数据应该就是要复现的密文了，所以我写了以下脚本 爆破：    
 </br>
@@ -76,7 +76,7 @@ int main()
 ```   
 瞬间得到flag :)
 </br>
-![]()
+![babyre4](https://github.com/fangdada/ctf/blob/master/screenshot/babyre4.png)
 
 
  
