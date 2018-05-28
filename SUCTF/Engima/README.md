@@ -3,37 +3,37 @@
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>用IDA打开发现是用了C++类的一些函数，不是那么容易看出来各个函数的作用，没事，我们用IDA远程调试到Linux动态调试看看。</font></br>
 
-![Enigma1]()
+![Enigma1](../../screenshot/Enigma/Enigma1.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>通过动态调试了之后，可以猜测出一些函数的作用并命名之（虽然不调试基本也能猜个差不多:P），程序先接收我们的输入，如果不是36个字符就退出，然后接下来的三个函数分别进行加密和判断正确：</font></br>
 
-![Enigma2]()
+![Enigma2](../../screenshot/Enigma/Enigma2.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>从第一个函数开始分析，每一轮8次循环都是对输入的字符的每一个比特位进行检查然后进行加工。每次都会把字符或者key放在一个临时变量的低8位，然后高8位放检查的比特位位置。我在这里把他们看成了结构体，事实上__int64也是可以的反正都是取地址。流程如下，根据我的命名看懂应该不难:)</font></br>
 
-![Enigma3]()
+![Enigma3](../../screenshot/Enigma/Enigma3.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这个函数里面一共有三轮加密，每次都用不一样的key，我根据这个地址命名为了key1,key2,key3。</font></br>
 
-![Enignma4]()
+![Enignma4](../../screenshot/Enigma/Enigma4.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>具体用key的哪一个字节根据当时处理的字节的位置。</font></br>
 
-![Enigma5]()
+![Enigma5](../../screenshot/Enigma/Enigma5.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这三轮加密都差不多，其实就是key不一样而已，根据输入的字节必须为36位，所以key3的最后一个字节其实永远不会用到:D，三轮加密完了就把这个字节存起来。
 </font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>然后我们回退，跟进到第二个加密函数分析分析，这个函数比较简单，逐个取出之前第一次加密完的字节再进行加工，然后再放回去。不多解释了，看懂了第一个函数后看懂这个不难。</font></br>
 
-![Enigma6]()
+![Enigma6](../../screenshot/Enigma/Enigma6.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这些加密完了就要开始比较密文了，第三个函数也不复杂，但是里面也有一个加密函数，根据内存中的一个seed（在这里是0x5F3759DF）进行加工后4字节4字节与我们先前的输入异或运算，每一次运算之前都会对seed加密一次（加密会修改seed）。</font></br>
 
-![Enigma7]()
+![Enigma7](../../screenshot/Enigma/Enigma7.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>对seed的加工过程如下：</font></br>
 
-![Enigma8]()
+![Enigma8](../../screenshot/Enigma/Enigma8.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>完了之后回退到主函数就是一个memcmp函数，比较我们的输入和密文了，如果相等那就是flag了，我发现这里是4字节4字节加密的，可以分组，所以我就用爆破来get flag :P</font></br>
 
