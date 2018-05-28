@@ -10,20 +10,20 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这道题下下来发现是一个exe，好久没做win下的题目了，gdb用多了突然有点用不惯窗口化的调试工具。。。但是窗口化工具也有窗口化的好处，呈现的信息更多，我还是比较喜欢做win下的题目的，感觉一般来说题目更难挑战也更大:P  </font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>动态调试工具我用的x64dbg，配合IDA。好了，开始撸这题吧！</font></br>
 
-![magic1]()
+![magic1](../../screenshot/magic/magic1.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>一开始搜索字符串看到sub_402563这个函数，虽然感觉这题也不太可能这么简单，跑了一下，然后给了我“a_joke:p”，好了，太秀了。上x64dbg,看看flag到底怎么搞得。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>发现怎么都跟踪不到上面那个函数，诶？难道是TLS？petool分析一波，找到tls table到里面看了一下没看懂:)，行，那我们单步跟踪，直接F8每次步过，同时关注被调试窗口的输出，如果输出了字符串，下断，重新跑，然后跟进这个函数，再重复上述，直到跟踪到这里（为什么是这里？因为这里是time函数，提示信息不是说时间不对吗:)</font></br>
 
-![magic2]()
+![magic2](../../screenshot/magic/magic2.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>用IDA转到这个地址看一下这里是什么操作：</font></br>
 
-![magic3]()
+![magic3](../../screenshot/magic/magic3.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这里用这个time做种子，然后rand生成256个数据对内存里的密文进行异或操作，然后看看这里面的一个自定义函数：</font></br>
 
-![magic4]()
+![magic4](../../screenshot/magic/magic4.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这里初始化了一个结构体，其中有三个成员，这个结构体看起来应该是这样的：</font></br>
 
@@ -37,7 +37,7 @@ struct var{
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>初始化的时候key被初始化为之前异或后的密文，然后其他两个成员始终都被赋值为0x7FFFFFFF和0，紧随其后又是一个自定义函数，继续跟进分析：</font></br>
 
-![magic5]()
+![magic5](../../screenshot/magic/magic5.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>发现这个函数还是有些繁杂的，它对传进来的结构的成员进行了一些运算加工，然后这里面还有的一个自定义我已经命名了，顾名思义，判断是否在区间里:D并不重要。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>当循环结束的时候会对其中一个成员（事实上是struct[255].mem1）进行判断是否0x700，如果不是的话就报错退出，那么肯定有一个seed可以让他等于0x700，所以我们要通过爆破（没错又是爆破）得到这个seed到底是多少，所以爆破脚本如下：</font></br>
@@ -206,20 +206,20 @@ int main()
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>得到了正确的seed之后，我们回到x64dbg，F8步过time64函数，然后修改rax(返回值知道吧)为0x5b00e398，继续往下执行，我们来到了一个需要我们输入的函数，猜测这里就是得到flag的关键了：</font></br>
 
-![magic6]()
+![magic6](../../screenshot/magic/magic6.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>同样的，用IDA转到这个位置看一下流程：</font></br>
 
-![magic7]()
+![magic7](../../screenshot/magic/magic7.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>首先查看一下sub_401F37函数，其中就是一些加密，看传进去的参数应该是用key对input进行了加密，if的前后有两个这个函数，连续加密两次不太可能，毕竟后面还输出了这个“连续加工两次的input”，猜测是类似异或的可逆加密，逆逆得正:P,然后看if里的函数，这个应该就是关键的验证函数了：</font></br>
 
-![magic8]()
+![magic8](../../screenshot/magic/magic8.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>看上去这个函数比较难啊，还用到了signal和setjmp这种不常见的操作，建议理解这个函数流程前先学习学习这些东西的用法:)</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>好了，这个函数其实就是模拟了虚拟机，从这里模拟了机器码，然后根据这些模拟的机器码进行某种操作：</font></br>
 
-![magic9]()
+![magic9](../../screenshot/magic/magic9.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>具体的操作我就不全讲了，需要注意的就是A9,A0,AC,AD，AE这些。整理了一下流程如下：</font></br>
 
@@ -264,17 +264,17 @@ int main()
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>然后我们回到x64dbg，在scanf那里随意输入一些数据，执行完了第一个加工（encode）函数后，在执行if里的函数之前，我们找到要传参进去的加密后的数组，手动把内存里的数据改成238cbefd25d765f4b6b3b60fe174a2effc384ed21a4ab11096a5。</font></br>
 
-![magic10]()
+![magic10](../../screenshot/magic/magic10.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>然后直接F8步过下一个验证函数，再F8若干次直到执行完第二个加工（decode）函数，如果你盯着那个缓冲区的话就会发现flag的大部分都在那里了:)为什么是大部分呢？ :)</font></br>
 
-![magic11]()
+![magic11](../../screenshot/magic/magic11.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>继续执行完后面的函数，你会看到flag的信息都已经被打印出来了，拼一下就是最终的flag</font></br>
 
-![magic12]()
+![magic12](../../screenshot/magic/magic12.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>也就是说flag就是*rctf{@ck_For_fun_02508iO2_2iOR}*</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>没看出来？我帮你画画:)</font></br>
 
-![magic13]()
+![magic13](../../screenshot/magic/magic13.png)
