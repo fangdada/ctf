@@ -1,13 +1,16 @@
 # SUCTF2018 Enigma
 ## Author: fanda
 </br>
+</br>
+>君子泰而不骄，小人骄而不泰。
+</br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>用IDA打开发现是用了C++类的一些函数，不是那么容易看出来各个函数的作用，没事，我们用IDA远程调试到Linux动态调试看看。</font></br>
 
 ![Enigma1](../../screenshot/Enigma/Enigma1.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>通过动态调试了之后，可以猜测出一些函数的作用并命名之（虽然不调试基本也能猜个差不多:P），程序先接收我们的输入，如果不是36个字符就退出，然后接下来的三个函数分别进行加密和判断正确：</font></br>
 
-![Enigma2](../../screenshot/Enigma/Enigma2.png)
+![Enigma2](../../screenshot/Enigma/Enigma2.jpg)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>从第一个函数开始分析，每一轮8次循环都是对输入的字符的每一个比特位进行检查然后进行加工。每次都会把字符或者key放在一个临时变量的低8位，然后高8位放检查的比特位位置。我在这里把他们看成了结构体，事实上__int64也是可以的反正都是取地址。流程如下，根据我的命名看懂应该不难:)</font></br>
 
