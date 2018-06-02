@@ -85,7 +85,7 @@ unsigned char flag[33]={0,};
 const int len=8;
 
 unsigned int key_arr[]={
-	0x67452301,
+  0x67452301,
   0xEFCDAB89,
   0x98BADCFE,
   0x10325476,
