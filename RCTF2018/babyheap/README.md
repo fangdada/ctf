@@ -4,7 +4,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>先贴一下**securisecctf队**写的[原wp](https://twisted-fun.github.io/2018-05-24-RCTF18-PWN-317/)的地址，我在这里配合这篇wp再解析一下。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>拿到二进制文件后常规检查一下，可以看到程序本身所有的保护都开了，而libc有一个没开，这意味这我们有改写libc的GOT表的权限，在这里我们可以修改__malloc_hook。</font></br>
 
-![babyheap1]()
+![babyheap1](../../screenshot/babyheap1.png)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>用IDA打开附带的libc.so.6，搜索字符串，跟踪/bin/sh，可以看到从**0x4526a**地址处开始有调用execve("/bin/sh")，因此这里就是我们用来getshell的gadget了；用'objdump -R libc.so.6 | grep hook'命令得到__malloc_hook的地址:**0x3c3ef0**</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>然后我们开始分析这个程序，很典型的堆题套路，漏洞点就在alloc的时候，输入堆块内容的时候存在溢出最后一字节的可能性:</font></br>
