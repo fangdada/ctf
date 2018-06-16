@@ -559,7 +559,7 @@ int main()
 
 ![magic12](../../screenshot/magic/magic12.png)
 
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>也就是说flag就是*rctf{h@ck_For_fun_02508iO2_2iOR}*</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>也就是说flag就是**rctf{h@ck_For_fun_02508iO2_2iOR}**</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>没看出来？我帮你画画:)</font></br>
 
 ![magic13](../../screenshot/magic/magic13.jpg)
