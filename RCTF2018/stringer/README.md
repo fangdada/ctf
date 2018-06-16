@@ -21,18 +21,17 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>意思就是说如果堆块被设置了mmaped标志位的话，calloc就不会把他初始化为0，那么mmaped标志位在哪呢？我们来看一下堆块头（取自[sploitfun](https://sploitfun.wordpress.com/2015/06/09/off-by-one-vulnerability-heap-based/)）：</br>
 
-```C
-prev_size – If the previous chunk is free, this field contains the size of previous chunk.
-Else if previous chunk is allocated, this field contains previous chunk’s user data.
+>prev_size – If the previous chunk is free, this field contains the size of previous chunk.
+>Else if previous chunk is allocated, this field contains previous chunk’s user data.
+>
+>size : This field contains the size of this allocated chunk. Last 3 bits of this field contains flag information.
+>	PREV_INUSE (P) – This bit is set when previous chunk is allocated.
+>	IS_MMAPPED (M) – This bit is set when chunk is mmap’d.
+>	NON_MAIN_ARENA (N) – This bit is set when this chunk belongs to a thread arena.
+>
+>fd – Points to next chunk in the same bin.
+>bk – Points to previous chunk in the same bin.
 
-size : This field contains the size of this allocated chunk. Last 3 bits of this field contains flag information.
-	PREV_INUSE (P) – This bit is set when previous chunk is allocated.
-	IS_MMAPPED (M) – This bit is set when chunk is mmap’d.
-	NON_MAIN_ARENA (N) – This bit is set when this chunk belongs to a thread arena.
-
-fd – Points to next chunk in the same bin.
-bk – Points to previous chunk in the same bin.
-```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>也就是堆块size中的第二个比特位，如果本来size是0x91,我们置了mmaped之后就是0x93(PREV_INUSE | IS_MMAPED)。然后就可以绕过置0，成功泄露地址了:)其他套路都差不多，所以直接放脚本了：</br>
 
