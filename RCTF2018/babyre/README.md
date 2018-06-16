@@ -74,7 +74,7 @@ unsigned int __cdecl sub_804868B(unsigned int per_string, unsigned __int64 const
 脚本
 -----
 
-</br>
+
 ``` C++
 #define LODWORD(x)  (*((unsigned int*)&(x))) #define HIDWORD(x)  (*((unsigned int*)&(x)+1)) 
  
