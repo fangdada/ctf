@@ -76,10 +76,10 @@ ptr_flag= ((((h_flag>>5)^(h_flag<<4))+ h_flag)^(ptr_key2 + *(ptr_string+(h_flag 
 ```C
 for(int i=0;i<58;i+=2)
 {
-		cur_key1=key_table[56-i];
-		cur_key2=key_table[57-i];
-		ptr_flag-=((((h_flag>>5)^(h_flag<<4))+ h_flag)^(cur_key2 + *(ptr_string+(h_flag & 0xF))));
-		h_flag-=(cur_key1 + *(ptr_string+(ptr_flag & 0xF))^ptr_flag+ ((ptr_flag>>5)^(ptr_flag<<4)));
+  cur_key1=key_table[56-i];
+  cur_key2=key_table[57-i];
+  ptr_flag-=((((h_flag>>5)^(h_flag<<4))+ h_flag)^(cur_key2 + *(ptr_string+(h_flag & 0xF))));
+  h_flag-=(cur_key1 + *(ptr_string+(ptr_flag & 0xF))^ptr_flag+ ((ptr_flag>>5)^(ptr_flag<<4)));
 }
 ```
 
