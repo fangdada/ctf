@@ -9,28 +9,83 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>程序的主题还是很清晰的，有几个 key table 用来加密你输入的数据，加密完了跟另一个 flag 的密文比较。 </font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>比较复杂的就是还原化简这一大段代码了。  </font></br>
 
-![milktea2](../../screenshot/milktea2.png)
+```C
+do
+    {
+      v7 = (((unsigned int)ptr_flag >> 5) | 0xC22DCD39) & (~((unsigned int)ptr_flag >> 5) | 0x3DD232C6);
+      v8 = ~(~v7 & 0xA6121C92 | v7 & 0x41EDE36D | 0x5779469B) | (~v7 & 0xA6121C92 | v7 & 0x41EDE36D) & 0x4779469B;
+      v9 = (16 * ptr_flag | 0xF7FDFF0C) & (~(16 * ptr_flag) | 0x80200F3);
+      v10 = ~(~v9 & 0xDDEA0C3F | v9 & 0x2215F3C0 | 0x6EEC8DD8) | (~v9 & 0xDDEA0C3F | v9 & 0x2215F3C0) & 0x6EEC8DD8;
+      v11 = v8 | v10;
+      v12 = v10 & v8;
+      v13 = (*(_DWORD *)ptr_key + *((_DWORD *)&key_string + (ptr_flag & 0xF))) & 0x6AAB745D | ~((*(_DWORD *)ptr_key
+                                                                                               + *((_DWORD *)&key_string
+                                                                                                 + (ptr_flag & 0xF))) | 0x6AAB745D);
+      v14 = ptr_flag + ((v12 | ~v11 | 0x88421624) & ~((v12 | ~v11) & 0x88421624));
+      v15 = ~((v14 | 0xC22DCD39) & (~v14 | 0x3DD232C6));
+      h_flag = ((v13 & v15 | ~(v13 | v15) | 0x5779469B) & ~((v13 & v15 | ~(v13 | v15)) & 0x5779469B))
+             + (unsigned int)h_flag;
+      v16 = *((_DWORD *)ptr_key + 1) + *((_DWORD *)&key_string + (h_flag & 0xF));
+      v17 = ((unsigned int)h_flag >> 5) & 0x66EE8D2B | ~(((unsigned int)h_flag >> 5) | 0x66EE8D2B);
+      v18 = ~((16 * h_flag | 0xF7FDFF0C) & (~(16 * h_flag) | 0x80200F3));
+      v19 = ((v17 & v18 | ~(v17 | v18) | 0x6EEC8DD8) & ~((v17 & v18 | ~(v17 | v18)) & 0x6EEC8DD8)) + h_flag;
+      v20 = ~(~((v16 | 0xF7FDFF0C) & (~v16 | 0x80200F3)) & 0xC09AB27B | (v16 | 0xF7FDFF0C) & (~v16 | 0x80200F3) & 0x3F654D84 | 0x6EEC8DD8) | (~((v16 | 0xF7FDFF0C) & (~v16 | 0x80200F3)) & 0xC09AB27B | (v16 | 0xF7FDFF0C) & (~v16 | 0x80200F3) & 0x3F654D84) & 0x6EEC8DD8;
+      ptr_key = (char *)ptr_key + 8;
+      v21 = ~((v19 | 0xC22DCD39) & (~v19 | 0x3DD232C6)) & 0x632C14AA | (v19 | 0xC22DCD39) & (~v19 | 0x3DD232C6) & 0x9CD3EB55;
+      ptr_flag = (((~(v21 | 0x5779469B) | v21 & 0x5779469B | v20) & ~((~(v21 | 0x5779469B) | v21 & 0x5779469B) & v20) | 0xAFF35FA7) & ~((~(v21 | 0x5779469B) | v21 & 0x5779469B | v20) & ~((~(v21 | 0x5779469B) | v21 & 0x5779469B) & v20) & 0xAFF35FA7))
+               + (unsigned int)ptr_flag;
+    }
+    while ( ptr_key != (void *)0x6011A8 );
+```
 
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>我不知道这些化简是什么原理，有没有公式可循，反正我耐着性子花了一天多慢慢化简。 </font></br>
 
-![milktea3](../../screenshot/milktea3.png)
+```C
+//Equal to here:
+	
+v8=(ptr_flag>>5)^0xccb968cf;
+v10=16*ptr_flag^0xbb048114;
+v13 = ptr_key1 + *(ptr_string+(ptr_flag & 0xF))^0x95548ba2;
+v15 = ptr_flag+ ((ptr_flag>>5)^(ptr_flag<<4))^0x3DD232C6;
+h_flag=(ptr_key1 + *(ptr_string+(ptr_flag & 0xF))^ptr_flag+ ((ptr_flag>>5)^(ptr_flag<<4)))+h_flag;
+v16=ptr_key2 + *(ptr_string+(h_flag & 0xF));
+v17=(h_flag>>5)^(~0x66EE8D2B);
+v18=16*h_flag^0x80200F3;
+v19=(~v17^v18^0x6EEC8DD8)+ h_flag;
+v20=~v16^0xF7FDFF0C^0xC09AB27B^0x6EEC8DD8;
+v21 = v19^0xC22DCD39^0x632C14AA;
+ptr_flag= (~v21^0x5779469B^v20^0xAFF35FA7)+(unsigned int)ptr_flag;
+	
+```
+
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这些临时变量 v 什么 v 什么统统消去，最后就是这两行。 </font></br>
 
-![milktea4](../../screenshot/milktea4.png)
+```C
+//Then Equal to here:
+
+h_flag=(ptr_key1 + *(ptr_string+(ptr_flag & 0xF))^ptr_flag+ ((ptr_flag>>5)^(ptr_flag<<4)))+h_flag;
+ptr_flag= ((((h_flag>>5)^(h_flag<<4))+ h_flag)^(ptr_key2 + *(ptr_string+(h_flag & 0xF))))+ptr_flag;
+
+```
+
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>写出他的解密逆运算：</font></br>
 
-![milktea5](../../screenshot/milktea5.png)
+```C
+for(int i=0;i<58;i+=2)
+{
+		cur_key1=key_table[56-i];
+		cur_key2=key_table[57-i];
+		ptr_flag-=((((h_flag>>5)^(h_flag<<4))+ h_flag)^(cur_key2 + *(ptr_string+(h_flag & 0xF))));
+		h_flag-=(cur_key1 + *(ptr_string+(ptr_flag & 0xF))^ptr_flag+ ((ptr_flag>>5)^(ptr_flag<<4)));
+}
+```
+
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>看上去就是这么简单。 </font></br>
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>最后一下就跑出了 flag </font></br>
-
-![milktea6](../../screenshot/milktea6.png)
-</br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>脚本的源代码我是用 C 写的，就放在下面了： </font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>最后用脚本跑一下就能得到flag，源代码我是用 C 写的，就放在下面了： </font></br>
 
 脚本
 =====
