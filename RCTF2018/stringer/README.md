@@ -25,9 +25,9 @@
 >Else if previous chunk is allocated, this field contains previous chunk’s user data.</br>
 ></br>
 >size : This field contains the size of this allocated chunk. Last 3 bits of this field contains flag information.</br>
->	PREV_INUSE (P) – This bit is set when previous chunk is allocated.</br>
->	IS_MMAPPED (M) – This bit is set when chunk is mmap’d.</br>
->	NON_MAIN_ARENA (N) – This bit is set when this chunk belongs to a thread arena.</br>
+>	&nbsp;&nbsp;&nbsp;&nbsp;PREV_INUSE (P) – This bit is set when previous chunk is allocated.</br>
+>	&nbsp;&nbsp;&nbsp;&nbsp;IS_MMAPPED (M) – This bit is set when chunk is mmap’d.</br>
+>	&nbsp;&nbsp;&nbsp;&nbsp;NON_MAIN_ARENA (N) – This bit is set when this chunk belongs to a thread arena.</br>
 ></br>
 >fd – Points to next chunk in the same bin.</br>
 >bk – Points to previous chunk in the same bin.
