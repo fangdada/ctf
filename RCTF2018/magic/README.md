@@ -19,11 +19,75 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>用IDA转到这个地址看一下这里是什么操作：</font></br>
 
-![magic3](../../screenshot/magic/magic3.png)
+```C
+__int64 sub_402268()
+{
+  __int64 result; // rax@3
+  unsigned int v1; // [sp+20h] [bp-10h]@7
+  int v2; // [sp+24h] [bp-Ch]@7
+  unsigned int Seed; // [sp+28h] [bp-8h]@1
+  int i; // [sp+2Ch] [bp-4h]@4
+
+  Seed = time64(0i64);
+  if ( Seed > 0x5AFFE78F && Seed <= 0x5B028A8F )
+  {
+    srand(Seed);
+    for ( i = 0; i <= 255; ++i )
+      key1_table[i] ^= rand();
+    v2 = 0;
+    v1 = 0;
+    sub_4027ED((__int64)key1_table, &v2, &v1);
+    if ( v2 == 0x700 )
+    {
+      failed_flag[0] = v1;
+      result = v1;
+    }
+    else
+    {
+      failed_flag[0] = 0;
+      result = 0i64;
+    }
+  }
+  else
+  {
+    result = 0i64;
+  }
+  return result;
+}
+```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这里用这个time做种子，然后rand生成256个数据对内存里的密文进行异或操作，然后看看这里面的一个自定义函数：</font></br>
 
-![magic4](../../screenshot/magic/magic4.png)
+```C
+_DWORD *__fastcall sub_4027ED(__int64 key, _DWORD *a2, _DWORD *a3)
+{
+  _DWORD *result; // rax@4
+  char Dst; // [sp+20h] [bp-60h]@1
+  int v5; // [sp+C18h] [bp+B98h]@4
+  int v6; // [sp+C1Ch] [bp+B9Ch]@4
+  unsigned int i; // [sp+C2Ch] [bp+BACh]@1
+  char vars0[8]; // [sp+C30h] [bp+BB0h]@2
+  __int64 ptr_key; // [sp+C40h] [bp+BC0h]@1
+  _DWORD *v10; // [sp+C48h] [bp+BC8h]@1
+  _DWORD *v11; // [sp+C50h] [bp+BD0h]@1
+
+  ptr_key = key;
+  v10 = a2;
+  v11 = a3;
+  memset(&Dst, 0, 0xC00ui64);
+  for ( i = 0; (signed int)i <= 255; ++i )
+  {
+    vars0[12 * i - 3088] = *(_BYTE *)((signed int)i + ptr_key);
+    *(_DWORD *)&vars0[12 * i - 3084] = 0x7FFFFFFF;
+    *(_DWORD *)&vars0[12 * i - 3080] = 0;
+    sub_4026D0((__int64)&Dst, i);
+  }
+  *v10 = v5;                                    // v5 should be 0x700
+  result = v11;
+  *v11 = v6;
+  return result;
+}
+```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这里初始化了一个结构体，其中有三个成员，这个结构体看起来应该是这样的：</font></br>
 
@@ -37,7 +101,63 @@ struct var{
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>初始化的时候key被初始化为之前异或后的密文，然后其他两个成员始终都被赋值为0x7FFFFFFF和0，紧随其后又是一个自定义函数，继续跟进分析：</font></br>
 
-![magic5](../../screenshot/magic/magic5.png)
+```C
+signed __int64 __fastcall sub_4026D0(__int64 t_struct, unsigned int index)
+{
+  signed __int64 result; // rax@1
+  signed __int64 v3; // rax@3
+  int v4; // [sp+24h] [bp-1Ch]@14
+  signed __int64 v5; // [sp+28h] [bp-18h]@8
+  signed __int64 v6; // [sp+30h] [bp-10h]@5
+  signed __int64 v7; // [sp+38h] [bp-8h]@1
+  __int64 struct_ptr; // [sp+50h] [bp+10h]@1
+  unsigned int _index; // [sp+58h] [bp+18h]@1
+
+  struct_ptr = t_struct;
+  _index = index;
+  result = safe_get_struct(t_struct, index);
+  v7 = result;
+  if ( result )
+  {
+    if ( _index & 0xF )
+      v3 = safe_get_struct(struct_ptr, _index - 1);
+    else
+      v3 = 0i64;
+    v6 = v3;
+    if ( _index + 15 <= 0x1E )
+      result = 0i64;
+    else
+      result = safe_get_struct(struct_ptr, _index - 16);
+    v5 = result;
+    if ( v6 || result )
+    {
+      if ( v6 )
+      {
+        *(_DWORD *)(v7 + 4) = *(_BYTE *)v7 + *(_DWORD *)(v6 + 4);
+        result = v7;
+        *(_DWORD *)(v7 + 8) = 2 * *(_DWORD *)(v6 + 8);
+      }
+      if ( v5 )
+      {
+        v4 = *(_DWORD *)(v5 + 4) + *(_BYTE *)v7;
+        result = *(_DWORD *)(v7 + 4);
+        if ( v4 < (signed int)result )
+        {
+          *(_DWORD *)(v7 + 4) = v4;
+          result = v7;
+          *(_DWORD *)(v7 + 8) = 2 * *(_DWORD *)(v5 + 8) | 1;
+        }
+      }
+    }
+    else
+    {
+      result = v7;
+      *(_DWORD *)(v7 + 4) = *(_BYTE *)v7;
+    }
+  }
+  return result;
+}
+```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>发现这个函数还是有些繁杂的，它对传进来的结构的成员进行了一些运算加工，然后这里面还有的一个自定义我已经命名了，顾名思义，判断是否在区间里:D并不重要。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>当循环结束的时候会对其中一个成员（事实上是struct[255].mem1）进行判断是否0x700，如果不是的话就报错退出，那么肯定有一个seed可以让他等于0x700，所以我们要通过爆破（没错又是爆破）得到这个seed到底是多少，所以爆破脚本如下：</font></br>
@@ -210,11 +330,176 @@ int main()
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>同样的，用IDA转到这个位置看一下流程：</font></br>
 
-![magic7](../../screenshot/magic/magic7.png)
+```C
+__int64 print_flag()
+{
+  __int64 result; // rax@4
+  char Str[8]; // [sp+20h] [bp-30h]@3
+  __int64 v2; // [sp+28h] [bp-28h]@3
+  __int64 v3; // [sp+30h] [bp-20h]@3
+  __int64 v4; // [sp+38h] [bp-18h]@3
+  unsigned int v5; // [sp+43h] [bp-Dh]@3
+  char v6; // [sp+47h] [bp-9h]@3
+  const char *input_ptr; // [sp+48h] [bp-8h]@3
+
+  if ( !failed_flag[0] )
+    exit(0);
+  v6 = 0;
+  v5 = failed_flag[0];
+  xor_and_puts((__int64)&unk_4052A0, 49, failed_flag[0]);
+  *(_QWORD *)Str = 0i64;
+  v2 = 0i64;
+  v3 = 0i64;
+  v4 = 0i64;
+  Str[0] = 32;
+  Str[1] = 32;
+  Str[2] = 32;
+  Str[3] = 32;
+  input_ptr = &Str[4];
+  scanf("%26s", &Str[4]);
+  sub_401F37((__int64)input_ptr, 0x1Au, (__int64)&v5, 4u);
+  if ( (unsigned int)sub_4029C7(input_ptr) )
+  {
+    sub_401F37((__int64)input_ptr, 0x1Au, (__int64)&v5, 4u);
+    sub_401FFB();
+    xor_and_puts((__int64)&unk_4052E0, 35, failed_flag[0]);
+    puts(Str);
+    result = xor_and_puts((__int64)&unk_4052E0, 35, failed_flag[0]);
+  }
+  else
+  {
+    result = xor_and_puts((__int64)aXc, 6, failed_flag[0]);
+  }
+  return result;
+}
+```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>首先查看一下sub_401F37函数，其中就是一些加密，看传进去的参数应该是用key对input进行了加密，if的前后有两个这个函数，连续加密两次不太可能，毕竟后面还输出了这个“连续加工两次的input”，猜测是类似异或的可逆加密，逆逆得正:P,然后看if里的函数，这个应该就是关键的验证函数了：</font></br>
 
-![magic8](../../screenshot/magic/magic8.png)
+```C
+__int64 __fastcall sub_4029C7(const char *string)
+{
+  int op_command; // eax@2
+  int v2; // eax@23
+  jmp_buf Buf; // [sp+20h] [bp-110h]@2
+  unsigned int v5; // [sp+124h] [bp-Ch]@1
+  int v6; // [sp+128h] [bp-8h]@1
+  int step; // [sp+12Ch] [bp-4h]@1
+
+  strncpy(string_buf, string, 0x1Aui64);
+  signal(8, (void (__cdecl *)(int))Func);
+  step = 0;
+  v6 = 1;
+  v5 = 0;
+  key_ptr = (unsigned __int64)&key_table;
+  input_ptr = (unsigned __int64)string_buf;
+  while ( v6 )
+  {
+    op_command = setjmp(Buf);
+    if ( op_command == 0xA8 )
+    {
+      *(&reg_addr + (unsigned __int8)(opcode[step] >> 4)) -= *(&reg_addr + (opcode[step] & 0xF));
+      ++step;
+    }
+    else if ( op_command > 0xA8 )
+    {
+      if ( op_command == 0xAC )
+      {
+        *(&reg_addr + (unsigned __int8)(opcode[step] >> 4)) &= *(&reg_addr + (opcode[step] & 0xF));
+        ++step;
+      }
+      else if ( op_command > 0xAC )
+      {
+        if ( op_command == 0xAE )
+        {
+          *(&reg_addr + (unsigned __int8)(opcode[step] >> 4)) ^= *(&reg_addr + (opcode[step] & 0xF));
+          ++step;
+        }
+        else if ( op_command < 0xAE )
+        {
+          *(&reg_addr + opcode[step]) = (unsigned __int8)~*((_BYTE *)&reg_addr + 4 * opcode[step]);
+          ++step;
+        }
+        else
+        {
+          if ( op_command != 0xAF )
+            goto LABEL_43;
+          dword_409060 = (unsigned __int8)(opcode[step] >> 4);
+          dword_409064 = opcode[step] & 0xF;
+          if ( !setjmp(::Buf) )
+            opcode[step] = dword_409060 / opcode[step + 1];
+          step += 2;
+        }
+      }
+      else if ( op_command == 0xAA )
+      {
+        *(&reg_addr + opcode[step]) = *(&reg_addr + opcode[step + 1]);
+        step += 2;
+      }
+      else if ( op_command > 0xAA )
+      {
+        *(&reg_addr + opcode[step]) = opcode[step + 1];
+        step += 2;
+      }
+      else
+      {
+        *(&reg_addr + (unsigned __int8)(opcode[step] >> 4)) += *(&reg_addr + (opcode[step] & 0xF));
+        ++step;
+      }
+    }
+    else if ( op_command == 0xA3 )
+    {
+      *(&reg_addr + (unsigned __int8)(opcode[step] >> 4)) |= *(&reg_addr + (opcode[step] & 0xF));
+      ++step;
+    }
+    else if ( op_command > 0xA3 )
+    {
+      if ( op_command == 0xA6 )
+      {
+        if ( !dword_409054 )
+          step += opcode[step];
+        ++step;
+      }
+      else if ( op_command > 0xA6 )
+      {
+        if ( dword_409054 )
+          step += opcode[step];
+        ++step;
+      }
+      else
+      {
+        if ( op_command != 0xA5 )
+          goto LABEL_43;
+        step += opcode[step];
+        ++step;
+      }
+    }
+    else if ( op_command == 0xA0 )
+    {
+      *(&reg_addr + opcode[step]) = *(_BYTE *)*(&reg_addr + opcode[step]);
+      ++step;
+    }
+    else if ( op_command == 0xA2 )
+    {
+      ++step;
+      *(&reg_addr + opcode[step]) >>= *(&reg_addr + opcode[step]);
+      ++step;
+    }
+    else
+    {
+      if ( !op_command )
+      {
+        v2 = step++;
+        jmp_get_next_command(Buf, opcode[v2]);
+      }
+LABEL_43:
+      v6 = 0;
+      v5 = dword_409054;
+    }
+  }
+  return v5;
+}
+```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>看上去这个函数比较难啊，还用到了signal和setjmp这种不常见的操作，建议理解这个函数流程前先学习学习这些东西的用法:)</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>好了，这个函数其实就是模拟了虚拟机，从这里模拟了机器码，然后根据这些模拟的机器码进行某种操作：</font></br>
