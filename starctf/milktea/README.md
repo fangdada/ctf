@@ -3,7 +3,7 @@
 </br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>其实一开始做这题的时候我是拒绝的，发现 64 位 64 位的分块加密我就知道不太可能 是爆破得到了。这题没想到这么复杂的加密其实是可以求逆的，第一次做的时候太急躁，看到 '&' , '|' 一类的我就放弃了，没想到化简后竟然是可逆的异或，还有 memcmp 这个坑货函数，实际动态调试的时候发现其实其 GOT 表里的地址是要给自定义函数，还对原本的密文进行了异或处理之后才开始对比。 </font></br>
 
-![milktea1](../../screenshot/milktea1.png)
+![milktea1](../../screenshot/milktea/milktea1.png)
 </br>
 <font size=2>（跟进到假的 memcmp 函数里面发现的密密密文………… </font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>程序的主题还是很清晰的，有几个 key table 用来加密你输入的数据，加密完了跟另一个 flag 的密文比较。 </font></br>
