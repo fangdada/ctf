@@ -129,17 +129,17 @@ key3[] = {0x3D,0x7A,0xB7,0xF4};
 
 ```C++
 if ( ++key_count == 4 )
-    {
-      key_count = 0;
-      ++key_i;                                  // key=*(&key1+key_i)
-    }
-    if ( key_i == 4 )
-    {
-      key_i = 0;
-      ++key_j;                                  // key=*(&key2+key_j)
-    }
-    if ( key_j == 4 )
-      key_j = 0;
+{
+  key_count = 0;
+  ++key_i;                                  // key=*(&key1+key_i)
+}
+if ( key_i == 4 )
+{
+  key_i = 0;
+  ++key_j;                                  // key=*(&key2+key_j)
+}
+if ( key_j == 4 )
+  key_j = 0;
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这三轮加密都差不多，其实就是key不一样而已，根据输入的字节必须为36位，所以key3的最后一个字节其实永远不会用到:D，三轮加密完了就把这个字节存起来。
