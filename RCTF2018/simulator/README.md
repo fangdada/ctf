@@ -1,5 +1,5 @@
 # RCTF simulator
-## Author： fanda
+## Author： 文火
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>学习了NextLine队伍的wp（[原链接](https://lyoungjoo.github.io/2018/05/21/RCTF-2018-Write-Up/)），自己理解复现了一遍，现在我讲解一下：</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>checksec一下关了GOT覆写保护，也关了基址随机化保护，那么就算题目没有给libc也可以用自己的，‘ldd simulator’一下然后用pwntools的ELF读取就行了。这题主要复杂在前面冗长的逆向分析，实际上模拟了MIPS指令，利用技巧上不难，程序对立即数没有检查，可以利用程序逻辑漏洞泄露更改任意地址。</font></br>

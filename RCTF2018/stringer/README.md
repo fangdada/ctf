@@ -1,5 +1,5 @@
 # RCTF stringer
-## Author: fanda
+## Author: 文火
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>老样子先贴一下我学习的**NBUSEC**队伍的wp[链接](https://github.com/sajjadium/ctf-writeups/blob/master/RCTF/2018/stringer/stringer_exploit.py)，诶刚起步只能多学习学习其他大佬的。</br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>这题保护全开，给的libc可以改写GOT，所以覆写\__malloc_hook不用多说，程序逆向分析一下发现明显存在off-by-one漏洞和double-free漏洞，当然还有UAF。这题主要难在calloc的行为会阻止我们泄露地址，不过，道高一尺魔高一丈:)</br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>通过观察[calloc](https://github.com/str8outtaheap/heapwn/blob/master/malloc/__libc_calloc.c)的源代码可以看到有这样一段：</br>

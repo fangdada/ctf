@@ -1,5 +1,5 @@
 # RCTF RNote4
-## Author: fanda
+## Author: 文火
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>checksec一下，NO RELRD，NO PIE，利用dll_resolve来getshell很简单。如果没有学过如何利用dll_resolve的可以配合这两篇文章先学习一下：[看雪](https://bbs.pediy.com/thread-227034.htm)，[BruceFan](http://pwn4.fun/2016/11/09/Return-to-dl-resolve/)。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>但鉴于这两篇文章都是讲32位下的，我这里再补充一下64位下的不同的地方：</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>Elf64_Sym结构和Elf64_Rel结构如下：</font></br>
@@ -43,7 +43,7 @@ typedef uint64_t Elf64_Addr;
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>首先用readelf -r RNote4得到以下信息：</font></br>
 
 ```C
-fanda@fanda:~/Desktop$ readelf -r RNote4
+文火@文火:~/Desktop$ readelf -r RNote4
 
 Relocation section '.rela.dyn' at offset 0x4d0 contains 2 entries:
   Offset          Info           Type           Sym. Value    Sym. Name + Addend

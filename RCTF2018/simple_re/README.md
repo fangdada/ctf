@@ -1,5 +1,5 @@
 # RCTF2018 simple_re
-## Author: fanda
+## Author: 文火
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这简直是我有史以来做的最爽的逆向题，综合性很强，各种反调试，还整合了一些密码学，还有爆破的技巧。不过有一个地方我没弄懂。。。为什么IDA并没有给出ELF头的一个错误，而是这些堆在一起的数据：</font></br>
 
 ![simplere1](../../screenshot/simple_re/simplere1.png)

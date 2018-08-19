@@ -1,5 +1,5 @@
 # babyvm
-## Author: fanda
+## Author: 文火
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>题目给了两个文件，其中vm_rel从p.bin读取数据作为程序的流程,我分析了一下然后得到了其大致的原理:</font>
 </br>
 ![babyvm1](../../screenshot/babyvm/babyvm1.png)  

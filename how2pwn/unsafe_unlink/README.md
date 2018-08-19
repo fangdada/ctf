@@ -1,5 +1,5 @@
 # unsafe_unlink
-## Author: fanda
+## Author: 文火
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>unsafe_unlink常常作为pwn入门的第一课，完成攻击时可以在任意地址进行一次改写，经常以改写got表实现劫持流程；[ctfwiki](https://ctf-wiki.github.io/ctf-wiki/pwn/heap/unlink/)，[how2heap](https://github.com/shellphish/how2heap/blob/master/glibc_2.25/unsafe_unlink.c)。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>在这里粘贴上我认为比较好的三篇资料（首先理解glibc的内存管理）：[堆溢出之unlink的利用](http://yunnigu.dropsec.xyz/2017/04/05/%E5%A0%86%E6%BA%A2%E5%87%BA%E4%B9%8Bunlink%E7%9A%84%E5%88%A9%E7%94%A8/)，[堆溢出的unlink利用](http://papap.info/2016/08/01/%E5%A0%86%E6%BA%A2%E5%87%BA%E7%9A%84unlink%E5%88%A9%E7%94%A8/)，[unlink漏洞的原理和利用](http://wonderkun.cc/index.html/?p=651)。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>demo程序是一个非常简单的漏洞礼包，在这里用unsafe_unlink实现一次改写got表：</font></br>

@@ -1,5 +1,5 @@
 # RCTF magic
-## Author: fanda
+## Author: 文火
 </br>
 </br>
 >整就牛！不管这有多困难，相信你的资质:)

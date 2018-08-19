@@ -1,5 +1,5 @@
 # RCTF babyheap
-## Author: fanda
+## Author: 文火
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>先贴一下**securisecctf队**写的[原wp](https://twisted-fun.github.io/2018-05-24-RCTF18-PWN-317/)的地址，我在这里配合这篇wp再解析一下。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>拿到二进制文件后常规检查一下，可以看到程序本身所有的保护都开了，而libc有一个没开，这意味这我们有改写libc的GOT表的权限，在这里我们可以修改__malloc_hook。</font></br>
