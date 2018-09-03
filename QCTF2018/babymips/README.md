@@ -5,6 +5,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>从最近的2018QCTF开始吧，babymips主要考研的对mips汇编的了解程度，程序内部逻辑太简单不多讲，看一遍mips指令集再静下心来好好分析分析就能做出了，我差不多还原了一下源代码:</font></br>
 
 ```C
+
 #include <stdio.h>
 #include <string.h>
 
@@ -56,7 +57,8 @@ void encrypt(char* buf)
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>然后给出我的逆运算脚本：</font></br>
 
-```python
+```C
+
 #include <stdio.h>
 
 char key1[]="Q|j{g";
