@@ -2,7 +2,7 @@
 ## Author: 文火
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这题就是字符串格式化漏洞，常规操作我就不说了，有两点要知道就是：</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>1.**n是改四个字节，hn改两个字节，hhn改一个字节**，所以可以利用这点修改got表为system函数的got表；</font></br>
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>2.**32位中printf的format里从esp开始的第1个（从0开始数）四个字节为1$，sprintf的第2个为1$。**64位的位置可调试得出，跟32位不一样因为传参规则不同。</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>2.**32位中printf的format里从esp开始的第1个（从0开始数）四个字节为1$，sprintf的第2个为1$**。64位的位置可调试得出，跟32位不一样因为传参规则不同。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>我写了一个demo来表示这题的利用思路，也方便日后复习了，至于这题的脚本[从这](http://invicsfate.cc/2018/07/16/QCTF-xman/)搬运。</font></br>
 
 demo
