@@ -93,6 +93,8 @@ P=[16,7,20,21,
 h=lambda x:((x>>5)<<1)+(x&1)
 l=lambda x:(x>>1)&0xf
 
+ENCRYPT=0
+DECRYPT=1
 
 
 # customize 'xor' function
@@ -161,7 +163,7 @@ def S_exchange(string):
         n=n2bin(s[int(i[0]+i[5],2)][int(''.join(i[1:5]),2)])
         for j in n:
             result.append(j)
-    return result
+    return temp,result
 
 
 
@@ -216,24 +218,41 @@ def loop_key(key):
 
 #************************************************************************************************************
 
-def loop_text(text,key):
-    round_table=[]
+def loop_text(text,key,result,round=16,mode=None):
+
     L=text[0:32]
     R=text[32:64]
 
-    for k,r in zip(key,range(0,16)):
+    for k,r in zip(key,range(0,round)):
         temp=R
-        round_table.append([])
-        round_table[r].append([L,R])
+        #round_table.append([])
+        #round_table[r].append([L,R])
         R=exchange(E,R)
         R=xor(R,k)
-        R=S_exchange(R)
+        S_table_input,R=S_exchange(R)
+
+        '''
+        if(mode==ENCRYPT):
+            print '\nround '+str(r+1)+':'
+            print 'S box input: \t\t\t output:'
+            for i,j in zip(S_table_input,range(0,8)):
+                for a in i:
+                    print a,
+                print '\t--------->\t',
+                for b in range(0,4):
+                    print R[j*4+b],
+                print 
+            print 
+        '''
+
+        result.append([S_table_input,R])
+
         R=exchange(P,R)
 
         R=xor(R,L)
         L=temp
 
-    # you can show round_table and get every round bin data
+    # you can show round_table and get every round bin data for debug
     # for i in round_table:
     #   for j in i:
     #     print ...
@@ -258,6 +277,9 @@ class DES(object):
     enc=[]
     dec=''
     hex_dec=[]
+    hex_set=[]
+    S_table_inout=[]
+    round=0
 
     def __doc__(self):
         print '\nthis class is used for attack DES (env Linux)'
@@ -277,14 +299,16 @@ class DES(object):
     # initialize the DES encryption and decryption 
     # ready to do differential analysis
 
-    def initDES(self,string='',passwd=''):
+    def initDES(self,string='',passwd='',round=16):
         
         self.key=[]                 # key
         self.enc=[]                 # string to be encrypted
         self.hex_dec=[]             # decrypted hex string
         self.dec=''                 # decrypted string
-        hex_set=[]                  # decrypted bin string
+        self.hex_set=[[],[]]             # hex stream
+        self.S_table_inout=[]       # recv the S-boxes' input and output
         gcount=0                    # align group size
+        self.round=round            # encrypt round count
 
 
 
@@ -328,10 +352,14 @@ class DES(object):
 
 
         # LOOP and PC2-exchange
-        # and now key has been generated
         self.key=loop_key(self.key)
+        #================================================================
+        # and now key has been generated
 
 
+        # Then start to encrypt
+        # support round define
+        #==============================================================
         # IP exchange for input
         for i in range(0,len(self.enc)):
             self.enc[i]=exchange(IP,self.enc[i])
@@ -339,7 +367,8 @@ class DES(object):
 
         # round encrypt
         for i in range(0,len(self.enc)):
-            self.enc[i]=loop_text(self.enc[i],self.key)
+            self.S_table_inout.append([])
+            self.enc[i]=loop_text(self.enc[i],self.key[0:round],self.S_table_inout[i],round,ENCRYPT)
             self.enc[i]=exchange(IP1,self.enc[i])
 
         # make string more readable
@@ -348,7 +377,7 @@ class DES(object):
             if s[-1]=='L':
                 s=s[:-2]
             #s='0'*(16-len(s))+s
-            hex_set.append(s)
+            self.hex_set[0].append(s)
 
         # here to decrypt
         for i in range(0,len(self.enc)):
@@ -356,7 +385,7 @@ class DES(object):
 
         # just reverse the key to decrypt
         for i in range(0,len(self.enc)):
-            self.hex_dec.append(loop_text(self.enc[i],self.key[::-1]))
+            self.hex_dec.append(loop_text(self.enc[i],self.key[round-1::-1],[],round,DECRYPT))
 
         # make result readable
         for i in range(0,len(self.hex_dec)):
@@ -365,17 +394,29 @@ class DES(object):
             if s[-1]=='L':
                 s=s[:-2]
             s='0'*(16-len(s))+s
+            self.hex_set[1].append(s)
             self.dec+=binascii.a2b_hex(s)
     
 
-    #=====================================================
-    # you can show the every step of en/decrypt here
-    # now I just code it casually :)
+        # encrypt and decrypt end
+        #=============================================================
+
+    
+
+
+    # then we use show to get every round data and analysis it!
+    #===================================================================
+    # I just code it casually :)
     # so if you need something stronger, edit it!
 
-    def show(self):
+    def show(self,fkey=0,fbox=0):
+
+        if len(self.hex_set)==0:
+            return 'you should show afrer initDES(...)'
+
         n=0
         print 'encrypt string(hex):'
+        print self.hex_set[0]
         for i in self.enc:
             print 'group '+str(n)+':'
             for j in i:
@@ -383,16 +424,38 @@ class DES(object):
             print 
             n+=1
 
-        print 'the key:'
-        for i,n in zip(self.key,range(1,17)):
-            print 'K'+str(n)+':\t',
-            for j in i:
-                print j,
-            print
-        print 
+
+        if(fkey==1):
+            print 'the key:'
+            for i,n in zip(self.key,range(1,17)):
+                print 'K'+str(n)+':\t',
+                for j in i:
+                    print j,
+                print
+            print 
+        
+
+
+        if(fbox==1):
+            for g in range(0,len(self.S_table_inout)):
+                print 'Group '+str(g+1)+':'
+                for r in range(0,self.round):
+                    print 'round '+str(r+1)+':'
+                    print 'input: \t\t\t\toutput:'
+                    for i,j in zip(self.S_table_inout[g][r][0],range(0,8)):
+                        for a in i:
+                            print a,
+                        print '\t------------->\t',
+                        for b in self.S_table_inout[g][r][1][j*4:(j+1)*4]:
+                            print b,
+                        print
+                    print
+
+
 
         n=0
-        print 'decrypt string(hex):'
+        print '\n\ndecrypt string(hex):'
+        print self.hex_set[1]
         for i in self.hex_dec:
             print 'group '+str(n)+':'
             for j in i:
@@ -400,7 +463,7 @@ class DES(object):
             print 
             n+=1
 
-        print 'decrypt string:'
+        print '\ndecrypt string:'
         print self.dec
 
 
@@ -427,6 +490,20 @@ class DES(object):
 
     # hard to understand, but just generated the differential table
     #************************************************************************
+    # use auto-differential analysis
+
+    def auto_diff_analy(self):
+        return ''
+
+
+
+
+
+
+
+
+    # show a set of possible key value
+    #===============================================================
     # display to standard output or record it to the file
 
     def display(self,iswrite=False):
@@ -462,5 +539,10 @@ if __name__ == '__main__':
         print 'waiting to be figured and coded...'
 
     #a=DES()
-    #a.initDES('hello','0123456789')
+    #a.initDES('hello,world!','0123456789',2)
+    #a.show(1,1)
+
+    #a.auto_diff_analy()
+
+    #a.initDES('welln','0123456789',2)
     #a.show()
