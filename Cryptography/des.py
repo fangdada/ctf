@@ -163,7 +163,7 @@ def S_exchange(string):
         n=n2bin(s[int(i[0]+i[5],2)][int(''.join(i[1:5]),2)])
         for j in n:
             result.append(j)
-    return temp,result
+    return result
 
 
 
@@ -228,9 +228,12 @@ def loop_text(text,key,result,round=16,mode=None):
         #round_table.append([])
         #round_table[r].append([L,R])
         R=exchange(E,R)
+        S_table_input=R
         R=xor(R,k)
-        S_table_input,R=S_exchange(R)
+        #S_table_input=R
+        R=S_exchange(R)
 
+        # the following code can show S-box input and output
         '''
         if(mode==ENCRYPT):
             print '\nround '+str(r+1)+':'
@@ -275,10 +278,11 @@ class DES(object):
     diff_table=[]
     key=[]
     enc=[]
-    dec=''
     hex_dec=[]
     hex_set=[]
     S_table_inout=[]
+    dec=''
+    gcount=0
     round=0
 
     def __doc__(self):
@@ -307,7 +311,7 @@ class DES(object):
         self.dec=''                 # decrypted string
         self.hex_set=[[],[]]             # hex stream
         self.S_table_inout=[]       # recv the S-boxes' input and output
-        gcount=0                    # align group size
+        self.gcount=0                    # align group size
         self.round=round            # encrypt round count
 
 
@@ -325,8 +329,8 @@ class DES(object):
         if len(string)==0:
             return 'usage: \'initDES(<string>,<key>)\''
         else:
-            gcount=len(string)/8 if len(string)%8==0 else (len(string)/8)+1
-            string+= (8*gcount-len(string))*'\x20'
+            self.gcount=len(string)/8 if len(string)%8==0 else (len(string)/8)+1
+            string+= (8*self.gcount-len(string))*'\x20'
             for i in range(0,len(string)/8):
                 self.enc.append([])
                 for j in string[i*8:(i+1)*8]:
@@ -365,7 +369,7 @@ class DES(object):
             self.enc[i]=exchange(IP,self.enc[i])
 
 
-        # round encrypt
+        # round encrypt group by group
         for i in range(0,len(self.enc)):
             self.S_table_inout.append([])
             self.enc[i]=loop_text(self.enc[i],self.key[0:round],self.S_table_inout[i],round,ENCRYPT)
@@ -435,21 +439,20 @@ class DES(object):
             print 
         
 
-
         if(fbox==1):
             for g in range(0,len(self.S_table_inout)):
                 print 'Group '+str(g+1)+':'
                 for r in range(0,self.round):
                     print 'round '+str(r+1)+':'
-                    print 'input: \t\t\t\toutput:'
-                    for i,j in zip(self.S_table_inout[g][r][0],range(0,8)):
-                        for a in i:
-                            print a,
-                        print '\t------------->\t',
-                        for b in self.S_table_inout[g][r][1][j*4:(j+1)*4]:
-                            print b,
-                        print
-                    print
+                    print 'input: \t\t\toutput:'
+                    for c in range(0,8):
+                        for i in self.S_table_inout[g][r][0][c*6:(c+1)*6]:
+                            print i,
+                        print '\t----------->\t',
+                        for j in self.S_table_inout[g][r][1][c*4:(c+1)*4]:
+                            print j,
+                        print 
+
 
 
 
@@ -465,6 +468,7 @@ class DES(object):
 
         print '\ndecrypt string:'
         print self.dec
+        print
 
 
 
@@ -491,12 +495,74 @@ class DES(object):
     # hard to understand, but just generated the differential table
     #************************************************************************
     # use auto-differential analysis
+    # here we store the input/output by a 2-dimension array design:
+    #
+    #           group
+    #   round  _________________________
+    #          |________________________|
+    #          |________________________|
+    #          |________________________|
+    #          |...............         |
+    #          |....................    |
+    #          |                        |
+    #          |________________________|
 
+
+    
     def auto_diff_analy(self):
-        return ''
+
+        p_set=[]
+        possible_set=[]
+        S1_input=[]
+        S1_output=[]
+
+        print 'using auto differential analysis(only S1)...'
+
+        for r in range(0,self.round):
+            p_set.append([])
+            S1_input.append([])
+            S1_output.append([])
+            for i in range(0,self.gcount/2):
+                S1_input1=int(''.join(self.S_table_inout[i*2][r][0][0:6]),2)
+                S1_input2=int(''.join(self.S_table_inout[i*2+1][r][0][0:6]),2)
+                S1_output1=int(''.join(self.S_table_inout[i*2][r][1][0:4]),2)
+                S1_output2=int(''.join(self.S_table_inout[i*2+1][r][1][0:4]),2)
+                p_set[r].append(self.diff_table[0][S1_input1^S1_input2][S1_output1^S1_output2])
+                S1_input[r].append([S1_input1,S1_input2])
+                S1_output[r].append([S1_output1,S1_output2])
+
+        #======================================================
+        # we've gotten the possible input's differential table here
+        # then we XOR the every item in the table with the inputs
+        # just one of inputs is enough for S<x> box 2-group
 
 
+        for s,i in zip(p_set,range(0,self.round)):
+            possible_set.append([])
+            for j in range(0,self.gcount/2):
+                possible_set[i].append(list(S1_input[i][j][0]^k for k in s[j]))
 
+        
+        #=====================================================
+        # then we are closing the set of possible key
+        # use set's '&' to get the closely set
+        # and then if we want to know the exactly key
+        # we must know more message and plain text
+
+        the_set=[]
+        for i in range(0,self.round):
+            temp=set(possible_set[i][0])
+            for j in possible_set[i]:
+                temp=temp&set(j)
+            the_set.append(temp)
+
+
+        for i,j in zip(the_set,range(0,self.round)):
+            print 'possible set of K'+str(j+1)+':',
+            for j in i:
+                print hex(j)[2:],
+            print
+        print 
 
 
 
@@ -532,17 +598,20 @@ class DES(object):
 
 if __name__ == '__main__':
     
-    if len(sys.argv)==1:
-        DES().__doc__()
-    else:
-        print 'no more function...'
-        print 'waiting to be figured and coded...'
+    #if len(sys.argv)==1:
+    #    DES().__doc__()
+    #else:
+    #    print 'no more function...'
+    #    print 'waiting to be figured and coded...'
 
-    #a=DES()
-    #a.initDES('hello,world!','0123456789',2)
-    #a.show(1,1)
+    a=DES()
+    #a.initDES('1111','0123456789',2)
+    a.initDES('hello,world world world and world','0123456789',5)
+    #a.initDES('hello,world!','0123456789',1)
+    a.show(1,1)
 
-    #a.auto_diff_analy()
+    a.initS()
+    a.auto_diff_analy()
 
     #a.initDES('welln','0123456789',2)
     #a.show()
