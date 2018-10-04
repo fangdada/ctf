@@ -290,10 +290,11 @@ class DES(object):
         print 'Author: fanda    mail:1278466220@qq.com\n'
         print 'use it by \'from des import DES\''
         print 'first init a class by \'xxx = DES()\' and then use the method:'
-        print 'initS()          *used to init the diff-table*'
-        print 'display(flag)    *used to display table or generate to  file (flag==0 > stdout,flag==1 > file)*'
-        print 'initDES()        *used to generate DES key and get the key at every step'
-        print 'show()           *only can be called after initDES() get all information about encrypt'
+        print 'initS()              *used to init the diff-table*'
+        print 'display(flag)        *used to display table or generate to  file (flag==0 > stdout,flag==1 > file)*'
+        print 'initDES()            *used to generate DES key and get the key at every step'
+        print 'show()               *only can be called after initDES() get all information about encrypt'
+        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack'
 
 
 
@@ -478,6 +479,14 @@ class DES(object):
 
     # now learn to use differential analysis to attack the DES
     #*******************************************************************
+    # the differential table will be generated like:
+    #
+    # diff_table =  [   < S-boxes >             ]
+    #               [   < input xor value >     ]
+    #               [   < output xor value >    ]
+
+
+
     def initS(self):
         for i in xrange(8):
             self.diff_table.append([])
@@ -510,6 +519,11 @@ class DES(object):
 
     
     def auto_diff_analy(self):
+
+        if len(self.diff_table)==0:
+            return 'call initS() first'
+        if len(self.S_table_inout)==0:
+            return 'call initDES() first'
 
         p_set=[]
         possible_set=[]
@@ -549,12 +563,18 @@ class DES(object):
         # and then if we want to know the exactly key
         # we must know more message and plain text
 
+
         the_set=[]
-        for i in range(0,self.round):
-            temp=set(possible_set[i][0])
-            for j in possible_set[i]:
-                temp=temp&set(j)
-            the_set.append(temp)
+        if len(possible_set[0])==0:
+            print 'set of K:None'
+            print 
+            return ''
+        else:
+            for i in range(0,self.round):
+                temp=set(possible_set[i][0])
+                for j in possible_set[i]:
+                    temp=temp&set(j)
+                the_set.append(temp)
 
 
         for i,j in zip(the_set,range(0,self.round)):
@@ -605,7 +625,7 @@ if __name__ == '__main__':
     #    print 'waiting to be figured and coded...'
 
     a=DES()
-    #a.initDES('1111','0123456789',2)
+    #a.initDES('1111','0123456789',1)
     a.initDES('hello,world world world and world','0123456789',5)
     #a.initDES('hello,world!','0123456789',1)
     a.show(1,1)
