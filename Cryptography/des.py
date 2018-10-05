@@ -233,21 +233,6 @@ def loop_text(text,key,result,round=16,mode=None):
         #S_table_input=R
         R=S_exchange(R)
 
-        # the following code can show S-box input and output
-        '''
-        if(mode==ENCRYPT):
-            print '\nround '+str(r+1)+':'
-            print 'S box input: \t\t\t output:'
-            for i,j in zip(S_table_input,range(0,8)):
-                for a in i:
-                    print a,
-                print '\t--------->\t',
-                for b in range(0,4):
-                    print R[j*4+b],
-                print 
-            print 
-        '''
-
         result.append([S_table_input,R])
 
         R=exchange(P,R)
@@ -453,6 +438,7 @@ class DES(object):
                         for j in self.S_table_inout[g][r][1][c*4:(c+1)*4]:
                             print j,
                         print 
+                print
 
 
 
@@ -504,7 +490,7 @@ class DES(object):
     # hard to understand, but just generated the differential table
     #************************************************************************
     # use auto-differential analysis
-    # here we store the input/output by a 2-dimension array design:
+    # here we store the input/output by a 3-dimension array design:
     #
     #           group
     #   round  _________________________
@@ -515,7 +501,12 @@ class DES(object):
     #          |....................    |
     #          |                        |
     #          |________________________|
-
+    #
+    #
+    #   while key made up with 8 pieces 
+    #   each piece is a 6-bit stream
+    #   also the third dimension of array
+    #=================================================================
 
     
     def auto_diff_analy(self):
@@ -530,20 +521,24 @@ class DES(object):
         S1_input=[]
         S1_output=[]
 
-        print 'using auto differential analysis(only S1)...'
+        print 'using auto differential analysis( with know all S-boxes\' input and output )...'
 
         for r in range(0,self.round):
             p_set.append([])
             S1_input.append([])
             S1_output.append([])
             for i in range(0,self.gcount/2):
-                S1_input1=int(''.join(self.S_table_inout[i*2][r][0][0:6]),2)
-                S1_input2=int(''.join(self.S_table_inout[i*2+1][r][0][0:6]),2)
-                S1_output1=int(''.join(self.S_table_inout[i*2][r][1][0:4]),2)
-                S1_output2=int(''.join(self.S_table_inout[i*2+1][r][1][0:4]),2)
-                p_set[r].append(self.diff_table[0][S1_input1^S1_input2][S1_output1^S1_output2])
-                S1_input[r].append([S1_input1,S1_input2])
-                S1_output[r].append([S1_output1,S1_output2])
+                for j in range(0,8):
+                    p_set[r].append([])
+                    S1_input[r].append([])
+                    S1_output[r].append([])
+                    S1_input1=int(''.join(self.S_table_inout[i*2][r][0][j*6:(j+1)*6]),2)
+                    S1_input2=int(''.join(self.S_table_inout[i*2+1][r][0][j*6:(j+1)*6]),2)
+                    S1_output1=int(''.join(self.S_table_inout[i*2][r][1][j*4:(j+1)*4]),2)
+                    S1_output2=int(''.join(self.S_table_inout[i*2+1][r][1][j*4:(j+1)*4]),2)
+                    p_set[r][j].append(self.diff_table[j][S1_input1^S1_input2][S1_output1^S1_output2])
+                    S1_input[r][j].append([S1_input1,S1_input2])
+                    S1_output[r][j].append([S1_output1,S1_output2])
 
         #======================================================
         # we've gotten the possible input's differential table here
@@ -554,7 +549,9 @@ class DES(object):
         for s,i in zip(p_set,range(0,self.round)):
             possible_set.append([])
             for j in range(0,self.gcount/2):
-                possible_set[i].append(list(S1_input[i][j][0]^k for k in s[j]))
+                for k in range(0,8):
+                    possible_set[i].append([])
+                    possible_set[i][k].append(list(S1_input[i][k][j][0]^z for z in s[k][j]))
 
         
         #=====================================================
@@ -565,22 +562,27 @@ class DES(object):
 
 
         the_set=[]
-        if len(possible_set[0])==0:
+        if len(possible_set[0][0])==0:
             print 'set of K:None'
             print 
             return ''
         else:
             for i in range(0,self.round):
-                temp=set(possible_set[i][0])
-                for j in possible_set[i]:
-                    temp=temp&set(j)
-                the_set.append(temp)
+                the_set.append([])
+                for p in range(0,8):
+                    temp=set(possible_set[i][p][0])
+                    for j in possible_set[i][p]:
+                        temp=temp&set(j)
+                    the_set[i].append(temp)
 
 
         for i,j in zip(the_set,range(0,self.round)):
-            print 'possible set of K'+str(j+1)+':',
-            for j in i:
-                print hex(j)[2:],
+            print 'possible set of K'+str(j+1)+':'
+            for j,r in zip(i,range(0,8)):
+                print str(r*6)+'-'+str((r+1)*6)+':',
+                for k in j:
+                    print hex(k)[2:],
+                print
             print
         print 
 
