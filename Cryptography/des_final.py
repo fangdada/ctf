@@ -1,10 +1,9 @@
 import binascii
 import sys
+from change_L0 import des_tools
 
 # Author:fanda
 # mail is followed
-# not finished
-# still coding...
 
 
 # define the DES boxes
@@ -148,6 +147,11 @@ def exchange(table,string):
         temp.append(string[i-1])
     return temp
 
+def reverse_exchange(table,string):
+    temp=[None]*len(table)
+    for i,j in zip(table,string):
+        temp[i-1]=j
+    return temp
 
 # S-box exchange
 # convert 6 bits num to 4 bit
@@ -225,10 +229,9 @@ def loop_text(text,key,result,round=16,mode=None):
 
     for k,r in zip(key,range(0,round)):
         temp=R
-        #round_table.append([])
-        #round_table[r].append([L,R])
         R=exchange(E,R)
         S_table_input=R
+
         R=xor(R,k)
         #S_table_input=R
         R=S_exchange(R)
@@ -279,7 +282,7 @@ class DES(object):
         print 'display(flag)        *used to display table or generate to  file (flag==0 > stdout,flag==1 > file)*'
         print 'initDES()            *used to generate DES key and get the key at every step'
         print 'show()               *only can be called after initDES() get all information about encrypt'
-        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack'
+        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack ( support 3-round and less only )'
 
 
 
@@ -296,9 +299,9 @@ class DES(object):
         self.enc_bak=[]             # store the encrypted bin-stream
         self.hex_dec=[]             # decrypted hex string
         self.dec=''                 # decrypted string
-        self.hex_set=[[],[]]             # hex stream
+        self.hex_set=[[],[]]        # hex stream
         self.S_table_inout=[]       # recv the S-boxes' input and output
-        self.gcount=0                    # align group size
+        self.gcount=0               # align group size
         self.round=round            # encrypt round count
 
 
@@ -363,6 +366,14 @@ class DES(object):
             self.enc[i]=loop_text(self.enc[i],self.key[0:round],self.S_table_inout[i],round,ENCRYPT)
             self.enc[i]=exchange(IP1,self.enc[i])
 
+        for i in range(0,len(self.enc)):
+            self.enc_bak[i]=self.enc[i]
+
+        # here to decrypt
+        for i in range(0,len(self.enc)):
+            self.enc[i]=exchange(IP,self.enc[i])
+
+
         # make string more readable
         for i in self.enc:
             s=hex(int(''.join(i),2))[2:]
@@ -371,14 +382,6 @@ class DES(object):
             #s='0'*(16-len(s))+s
             self.hex_set[0].append(s)
 
-        # bake-up the enc
-        for i in range(0,len(self.enc)):
-            self.enc_bak[i]=self.enc[i]
-
-
-        # here to decrypt
-        for i in range(0,len(self.enc)):
-            self.enc[i]=exchange(IP,self.enc[i])
 
         # just reverse the key to decrypt
         for i in range(0,len(self.enc)):
@@ -522,76 +525,152 @@ class DES(object):
             return 'call initS() first'
         if len(self.S_table_inout)==0:
             return 'call initDES() first'
+        if self.round>3:
+            return 'round is more than 3, auto-analyse exit'
 
-        p_set=[]
         possible_set=[]
-        S1_input=[]
-        S1_output=[]
+        final_set=[]
+        xor_input=[]
+        xor_output=[]
+        L_final=[]
+        R_final=[]
+        L0=[]
+        LR_final=[]
 
-        print 'using auto differential analysis( with know all S-boxes\' input and output )...'
-
-        for r in range(0,self.round):
-            p_set.append([])
-            S1_input.append([])
-            S1_output.append([])
-            for i in range(0,self.gcount/2):
-                for j in range(0,8):
-                    p_set[r].append([])
-                    S1_input[r].append([])
-                    S1_output[r].append([])
-                    S1_input1=int(''.join(self.S_table_inout[i*2][r][0][j*6:(j+1)*6]),2)
-                    S1_input2=int(''.join(self.S_table_inout[i*2+1][r][0][j*6:(j+1)*6]),2)
-                    S1_output1=int(''.join(self.S_table_inout[i*2][r][1][j*4:(j+1)*4]),2)
-                    S1_output2=int(''.join(self.S_table_inout[i*2+1][r][1][j*4:(j+1)*4]),2)
-                    p_set[r][j].append(self.diff_table[j][S1_input1^S1_input2][S1_output1^S1_output2])
-                    S1_input[r][j].append([S1_input1,S1_input2])
-                    S1_output[r][j].append([S1_output1,S1_output2])
-
-        #======================================================
-        # we've gotten the possible input's differential table here
-        # then we XOR the every item in the table with the inputs
-        # just one of inputs is enough for S<x> box 2-group
+        # this attack focus on the last round's key
+        # don't forget that R0 is the same
 
 
-        for s,i in zip(p_set,range(0,self.round)):
-            possible_set.append([])
-            for j in range(0,self.gcount/2):
-                for k in range(0,8):
-                    possible_set[i].append([])
-                    possible_set[i][k].append(list(S1_input[i][k][j][0]^z for z in s[k][j]))
+        print '============================================='
+        print 'using auto differential analysis...'
+        print '=============================================\n'
+        print 'using input(strings):',
+        print self.hex_set[1]
+        print 'using output(plain text):',
+        print self.hex_set[0]
+        print
 
+        # reverse the IP1
+
+        for g in range(0,self.gcount):
+            LR_final.append([])
+            L_final.append([])
+            R_final.append([])
+            #for i,j in zip(IP1,self.enc[g]):
+            #    LR_final[g][i-1]=j
+            LR_final[g]=reverse_exchange(IP1,self.enc_bak[g])
+            R_final[g]=LR_final[g][0:32]
+            L_final[g]=LR_final[g][32:64]
+
+        '''
+        #for i in range(0,self.gcount,2):
+        #    L0.append([])
+        #    L0[(i+1)/2].append(exchange(IP,self.hex_dec[i])[0:32])
+        #    L0[(i+1)/2].append(exchange(IP,self.hex_dec[i+1])[0:32])
+
+        L0=exchange(IP,self.hex_dec[1])[0:32]
+        R0=exchange(IP,self.hex_dec[1])[32:64]
+
+        #print binascii.a2b_hex(hex(int(''.join(self.hex_dec[0]),2))[2:])
+        #print binascii.a2b_hex(hex(int(''.join(self.hex_dec[1]),2))[2:])
+
+        #print 'R0:',
+        #print exchange(E,R0)
         
-        #=====================================================
-        # then we are closing the set of possible key
-        # use set's '&' to get the closely set
-        # and then if we want to know the exactly key
-        # we must know more message and plain text
+        R1=xor(exchange(P,(S_exchange(xor(exchange(E,R0),self.key[0])))),L0)
+        #print 'R1:',
+        #print exchange(E,R1)
+
+        L1=R0
+
+        R2=xor(exchange(P,S_exchange(xor(exchange(E,R1),self.key[1]))),L1)
+        #print 'R1 output:',
+        #print S_exchange(xor(exchange(E,R1),self.key[1]))
+        L2=R1
+
+        #print 'my enc string:',
+        #print exchange(IP1,R2+L2)
+        #print exchange(IP1,R2+L2)==self.enc_bak[1]
+
+        #print 'E-chg L2(should be R1 input):'
+        #print exchange(E,L2)
 
 
-        the_set=[]
-        if len(possible_set[0][0])==0:
-            print 'set of K:None'
+        print '\n\n\n'
+        '''
+
+
+        # now the R_final stores the EVERY group's last round Right part text
+        # and the L_final is the same but the left part
+        # the L0 stores the EVERY group's first round left part text
+        #====================================================================
+
+        # then let's use xor pairs to differential attack DES
+        # first collect the xor inputs and outputs
+
+
+        if(self.round==2):
+
+            print 'the target key:',
+            for i in range(0,8):
+                print hex(int(''.join(self.key[1][i*6:(i+1)*6]),2))[2:],
+            print '\n'
+
+            #print self.enc[0]
+
+            for i in range(0,self.gcount,2):
+
+                '''
+                print exchange(IP1,R_final[i]+L_final[i])==self.enc_bak[0]
+                print self.S_table_inout[i][1][0]
+                print 'record R1 input (group 2):'
+                print self.S_table_inout[i+1][1][0]
+                print 'R1 output:',
+                print self.S_table_inout[i+1][1][1]
+
+
+                
+                print 'S-box input:'
+                print exchange(E,L_final[i])
+                print exchange(E,L_final[i+1])
+
+                print '\nS-box output:'
+                print reverse_exchange(P,R_final[i])
+                print reverse_exchange(P,R_final[i+1])
+                print 
+                '''
+
+                xor_input.append(xor(exchange(E,L_final[i]),exchange(E,L_final[i+1])))
+                xor_output.append(xor(reverse_exchange(P,R_final[i]),reverse_exchange(P,R_final[i+1])))
+            
+
+
+            # then use differential table to analyse the K
+            for i in range(0,8):
+                possible_set.append([])
+                for IN,OUT in zip(xor_input,xor_output):
+                    possible_set[i].append(self.diff_table[i][int(''.join(IN[i*6:(i+1)*6]),2)][int(''.join(OUT[i*4:(i+1)*4]),2)])
+
+            for i in range(0,8):
+                for g in range(0,len(possible_set[i])):
+                    xor_value=int(''.join(exchange(E,L_final[g*2])[i*6:(i+1)*6]),2)
+                    for j in range(0,len(possible_set[i][g])):
+                        possible_set[i][g][j]^=xor_value
+
+            for i in possible_set:
+                temp=set(i[0])
+                for j in i:
+                    temp=temp&set(j)
+                final_set.append(temp)
+
+            for i in range(0,8):
+                print str(i*6)+'-'+str((i+1)*6)+':',
+                for j in final_set[i]:
+                    print hex(j)[2:],
+                print 
+
             print 
-            return ''
-        else:
-            for i in range(0,self.round):
-                the_set.append([])
-                for p in range(0,8):
-                    temp=set(possible_set[i][p][0])
-                    for j in possible_set[i][p]:
-                        temp=temp&set(j)
-                    the_set[i].append(temp)
 
-
-        for i,j in zip(the_set,range(0,self.round)):
-            print 'possible set of K'+str(j+1)+':'
-            for j,r in zip(i,range(0,8)):
-                print str(r*6)+'-'+str((r+1)*6)+':',
-                for k in j:
-                    print hex(k)[2:],
-                print
-            print
-        print 
 
 
 
@@ -627,20 +706,49 @@ class DES(object):
 
 if __name__ == '__main__':
     
+
+    a=DES()
+
+
+
+    # use another .py file to get string whose R0 will be the same
+    # while L0 will be the different to use choosen text attach
+    # 
+    # and more string pairs to try, the key will be clearer
+    # this is for example:
+
+    hello_world1=des_tools().change_string_L0('hellhell')
+    hello_world2=des_tools().change_string_L0('halohalo')
+    #hello_world2=des_tools().change_string_L0('shitword')
+    #hello_world3=des_tools().change_string_L0('fuckdamn')
+
+    a.initDES(hello_world1+hello_world2,'0123456789',2)
+
+
+
+
+    # show all the key and en/decrypted string
+    # you will find it easily :)
+
+    a.show(1,1)
+
+
+    # initialize the differential table
+    # then the code will auto-analyse it and attack it
+    a.initS()
+    a.auto_diff_analy()
+    
+
+    #===================================
+    # final edition
+    # please import :)
+    # use __doc__ for more information
+
+
     #if len(sys.argv)==1:
     #    DES().__doc__()
     #else:
     #    print 'no more function...'
     #    print 'waiting to be figured and coded...'
 
-    a=DES()
-    #a.initDES('1111','0123456789',1)
-    a.initDES('hello,world world world and world','0123456789',5)
-    #a.initDES('hello,world!','0123456789',1)
-    a.show(1,1)
 
-    a.initS()
-    a.auto_diff_analy()
-
-    #a.initDES('welln','0123456789',2)
-    #a.show()
