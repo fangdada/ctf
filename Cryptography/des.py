@@ -3,8 +3,6 @@ import sys
 
 # Author:fanda
 # mail is followed
-# not finished
-# still coding...
 
 
 # define the DES boxes
@@ -274,12 +272,12 @@ class DES(object):
         print '\nthis class is used for attack DES (env Linux)'
         print 'Author: fanda    mail:1278466220@qq.com\n'
         print 'use it by \'from des import DES\''
-        print 'first init a class by \'xxx = DES()\' and then use the method:'
+        print 'first init a class by \'xxx = DES()\' and then use the method:\n'
         print 'initS()              *used to init the diff-table*'
         print 'display(flag)        *used to display table or generate to  file (flag==0 > stdout,flag==1 > file)*'
         print 'initDES()            *used to generate DES key and get the key at every step'
-        print 'show()               *only can be called after initDES() get all information about encrypt'
-        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack'
+        print 'show(flag1,flag2)    *only can be called after initDES() get all information about encrypt'
+        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack\n'
 
 
 
@@ -627,20 +625,19 @@ class DES(object):
 
 if __name__ == '__main__':
     
-    #if len(sys.argv)==1:
-    #    DES().__doc__()
-    #else:
-    #    print 'no more function...'
-    #    print 'waiting to be figured and coded...'
+    if len(sys.argv)==1:
+        DES().__doc__()
+    else:
+        print 'hum?'
 
-    a=DES()
-    #a.initDES('1111','0123456789',1)
-    a.initDES('hello,world world world and world','0123456789',5)
-    #a.initDES('hello,world!','0123456789',1)
-    a.show(1,1)
+    # here is the demo to use:
+    # just support 1 round differential analysis
+    # maybe use python shell to import it will be better :)
 
-    a.initS()
-    a.auto_diff_analy()
+    #a=DES()
+    #a.initDES('hello,world world world and world','0123456789',5)
+    #a.show(1,1)
 
-    #a.initDES('welln','0123456789',2)
-    #a.show()
+    #a.initS()
+    #a.auto_diff_analy()
+

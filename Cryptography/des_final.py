@@ -277,12 +277,13 @@ class DES(object):
         print '\nthis class is used for attack DES (env Linux)'
         print 'Author: fanda    mail:1278466220@qq.com\n'
         print 'use it by \'from des import DES\''
-        print 'first init a class by \'xxx = DES()\' and then use the method:'
+        print 'and you can use change_L0.py to get nice string to use, see demo in \'__main__\''
+        print 'first init a class by \'xxx = DES()\' and then use the method:\n'
         print 'initS()              *used to init the diff-table*'
         print 'display(flag)        *used to display table or generate to  file (flag==0 > stdout,flag==1 > file)*'
         print 'initDES()            *used to generate DES key and get the key at every step'
-        print 'show()               *only can be called after initDES() get all information about encrypt'
-        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack ( support 3-round and less only )'
+        print 'show(flag1,flag2)    *only can be called after initDES() get all information about encrypt'
+        print 'auto_diff_analy()    *can be called to auto-use differential-analysis attack ( support 2 and 3 round only )\n'
 
 
 
@@ -661,34 +662,24 @@ class DES(object):
 if __name__ == '__main__':
     
 
-    a=DES()
-
-
-
-    # use another .py file to get string whose R0 will be the same
-    # while L0 will be the different to use choosen text attach
+    # use change_L0.py file to get string whose R0 will be the same
+    # while L0 will be the different to use choosen-text attack
     # 
     # and more string pairs to try, the key will be clearer
     # this is for example:
 
-    hello_world1=des_tools().change_string_L0('hellhell')
+    #hello_world1=des_tools().change_string_L0('hellhell')
 
-    a.initDES(hello_world1,'0123456789',1)
+    #a.initDES(hello_world1,'0123456789',3) 
 
+    #a.show(1)
 
-
-
-    # show all the key and en/decrypted string
-    # you will find it easily :)
-
-    a.show(1,1)
+    #a.initS()
+    #a.auto_diff_analy()
 
 
-    # initialize the differential table
-    # then the code will auto-analyse it and attack it
-    a.initS()
-    print a.auto_diff_analy()
-    
+
+
 
     #===================================
     # final edition
@@ -696,10 +687,9 @@ if __name__ == '__main__':
     # use __doc__ for more information
 
 
-    #if len(sys.argv)==1:
-    #    DES().__doc__()
-    #else:
-    #    print 'no more function...'
-    #    print 'waiting to be figured and coded...'
+    if len(sys.argv)==1:
+        DES().__doc__()
+    else:
+        print 'hum?'
 
 
