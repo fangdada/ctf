@@ -14,15 +14,21 @@ def c2bin(ch):
     b=bin(ord(ch))[2:]
     b='0'*(8-len(b))+b
     return b
- 
+
+def copy_2dimon_array(source,target):
+    for i,j in zip(source,range(0,len(source))):
+        target[j]=i
+
 class des_tools(object):
     
     string=''
     final_string=''
 
-    def change_string_L0(self,string):
+    def change_string_L0(self,string,gcount=5):
 
-        #string='hello,world world world and world'
+        if gcount==0:
+            print 'r u kidding me ?'
+            exit()
 
         self.string=string
     
@@ -30,26 +36,37 @@ class des_tools(object):
         self.string=self.string+' '*(group_count*8-len(self.string)) if len(self.string)%8!=0 else self.string
 
         tar=[]
+        tar_bak=[]
+        generate=[]
+        end_num=32/gcount+1
+        n=0
 
 
         for i in range(0,group_count):
             tar.append([])
+            tar_bak.append([])
+            generate.append([])
 
         for i in range(0,group_count):
             for j in self.string[i*8:(i+1)*8]:
                 for b in c2bin(j):
                     tar[i].append(b)
 
-        for i in tar:
-            for j in range(0,32):
-                i[IP[j]-1]=xor(i[IP[j]-1],'1')
-        
+        # just copy the binary-stream array
+        copy_2dimon_array(tar,tar_bak)
+        copy_2dimon_array(tar,generate)
 
 
-        for i in tar:
-            self.final_string+=binascii.a2b_hex(hex(int(''.join(i),2))[2:])
+        for g in range(0,gcount):
+            for i in generate:
+                for j in range(0,32):
+                    if j%(end_num)==n:
+                        i[IP[j]-1]=xor(i[IP[j]-1],'1')
+                self.final_string+=binascii.a2b_hex(hex(int(''.join(i),2))[2:])
+            n+=1
+            copy_2dimon_array(generate,tar)
 
         return self.string+self.final_string
 
-#hello_world='=099:yu\":\'91u\":\'91u\":\'91u4;1u\":\'91uuuuuu'
+#hello_world='hellhell'
 #des_tools().change_string_L0(hello_world)

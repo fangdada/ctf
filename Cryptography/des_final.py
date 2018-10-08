@@ -718,11 +718,11 @@ if __name__ == '__main__':
     # this is for example:
 
     hello_world1=des_tools().change_string_L0('hellhell')
-    hello_world2=des_tools().change_string_L0('halohalo')
+    #hello_world2=des_tools().change_string_L0('halohalo')
     #hello_world2=des_tools().change_string_L0('shitword')
     #hello_world3=des_tools().change_string_L0('fuckdamn')
 
-    a.initDES(hello_world1+hello_world2,'0123456789',2)
+    a.initDES(hello_world1,'0123456789',2)
 
 
 
