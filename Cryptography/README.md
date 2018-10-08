@@ -20,11 +20,14 @@
 > 修正了加密结束后的密文二进制流的输出
 - **done**
 
+</br>
+
 ### des_final.py
 
 - **final**
 > 支持2,3轮的差分攻击
 
+</br>
 
 目前进度
 =======
@@ -291,4 +294,4 @@ hello?  (uhmo? `8qimo?`p<pimopt=pim/otu=pi-?kuu
 ```
 
 
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>嗨呀终于写完了，那么DES就写到这儿了，分组密码再更新一个AES的，等我以后研究完了再上传代码工具8,先告一段落咯。<</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>嗨呀终于写完了，那么DES就写到这儿了，分组密码再更新一个AES的，等我以后研究完了再上传代码工具8,先告一段落咯。</font></br>
