@@ -59,6 +59,16 @@ Rcon = [0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000,
         0x20000000, 0x40000000, 0x80000000, 0x1b000000, 0x36000000]
 
 
+
+
+MixMatrix=[[2,3,1,1,],[1,2,3,1],[1,1,2,3],[3,1,1,2]]
+
+InvMixMatrix=[[0xe,0xb,0xd,9],[9,0xe,0xb,0xd],[0xd,9,0xe,0xb],[0xb,0xd,9,0xe]]
+
+
+
+
+
 # look up for Nr by AES-mode
 r={'128':10,'192':12,'256':14}
 
@@ -66,6 +76,8 @@ r={'128':10,'192':12,'256':14}
 # get one byte for a 32-bits num
 get_byte = lambda a,i: (a>>(24-(i*8)))&0xff
 
+# matrix rotation for State
+rotate = lambda x:map(list,zip(*x))
 
 
 
@@ -89,8 +101,28 @@ def XOR(w,r):
 
     return temp
 
-    
 
+def matrix_multi(m1,m2):
+
+    result=[]
+
+    if len(rotate(m1))!=len(m2):
+        print 'the size of matrix doesn\'t match multiplication standard'
+        return None
+
+    for i in range(0,len(m2)):
+        result.append([])
+        for j in range(0,len(rotate(m2))):
+            temp=0
+            for n1,n2 in zip(m1[i],rotate(m2)[j]):
+                temp^=GF_multi(n2,n1)
+            result[i].append(temp)
+
+    return result
+        
+
+    
+    
 
 
 
@@ -117,18 +149,16 @@ def XOR(w,r):
 
 
 
-def padding_plaintext(string,mode):
+def padding_plaintext(string,group_count,mode):
 
     text_set=[]
-    Nb=mode/32
-    align=Nb*4
-    group_count=len(string)/align if len(string)%align==0 else len(string)/align+1
-    string+=' '*(group_count*align-len(string))
+    Nb=4
 
     for i in range(0,group_count):
         text_set.append([])
         for j in range(0,Nb):
             text_set[i].append(list(ord(k) for k in string[j*4:(j+1)*4:]))
+        text_set[i]=rotate(text_set[i])
 
     return text_set
 
@@ -250,6 +280,67 @@ def g(w,count,Nk):
     return XOR(temp,Rcon[count/Nk-1])
 
 
+def SubBytes(plain_text,rev):
+
+    temp=[]
+    for i in plain_text:
+        temp.append(i)
+
+    if rev==0:
+        box=sbox
+    else:
+        box=rsbox
+
+
+    for i in range(0,len(temp)):
+        for j in range(len(temp[i])):
+            temp[i][j]=box[((temp[i][j]>>4)*0x10)+(temp[i][j]&0xf)]
+            
+    return temp
+    
+
+def ShiftRows(plain_text,rev):
+
+    temp=[]
+    for i in plain_text:
+        temp.append(i)
+
+    if rev==0:
+        for i in range(0,4):
+            temp[i]=temp[i][i:]+temp[i][0:i]
+    else:
+        for i in range(0,4):
+            temp[i]=temp[i][4-i:4]+temp[i][:4-i]
+
+
+    return temp
+
+
+
+def MixColumns(plain_text,rev):
+
+    if rev==0:
+        return matrix_multi(MixMatrix,plain_text)
+    else:
+        return matrix_multi(InvMixMatrix,plain_text)
+
+
+
+
+def AddRoundKey(plain_text,key,sum_round,key_round,rev):
+
+    temp=[]
+
+    if rev==1:
+        key_round=sum_round-key_round-1
+
+    for i in range(0,len(rotate(plain_text))):
+        temp.append(xor(rotate(plain_text)[i],key[(key_round+1)*4]))
+
+    temp=rotate(temp)
+    
+
+    return temp
 
 
 
@@ -267,11 +358,20 @@ def GF_multi(source_num,multi_num):
     for counter in range(8):
         if b & 1: p ^= a
         if a&0x80:
-            a=((a<<1)&0xff)^0x1b
+            a=(((a<<1)&0xff)^0x1b)
         else:
             a=(a<<1)&0xff
+
         b >>= 1
     return p
+
+
+def copy_cipher_text(plaintext):
+
+    temp=[]
+    for i in plaintext:
+        temp.append(i)
+    return temp
 
 
 
@@ -279,6 +379,9 @@ class AES(object):
 
     plaintext=[]
     key=[]
+    Nb=4
+    Nk=4
+    Nr=10
     mode=128
 
     ciphertext=[]
@@ -291,8 +394,6 @@ class AES(object):
         print 'use initAES(<plain text>,<key>,<mode>) to initialize a AES-standard cipher text and key.'
         print 'use show(flag1,flag2)    flag1 set 1 to show cipher text and key, flag2 set 1 to show nothing now :)'
         print ''
-
-    
 
 
 
@@ -307,32 +408,59 @@ class AES(object):
         self.plaintext=[]
         self.key=[]
 
-        if(self.mode!=128 & self.mode!=192 & self.mode!=256):
+        if(mode!=128 and mode!=192 and mode!=256):
             print 'AES encrypt mode not specific, using AES-128'
         else:
             self.mode=mode
+            self.Nk=self.mode/32
+            self.Nr=r[str(self.mode)]
 
-        if len(string)==0 | len(key)==0:
+        if len(string)==0 or len(key)==0:
             return 'please complete the input'
 
+        align=self.Nb*4
+        group_count=len(string)/align if len(string)%align==0 else len(string)/align+1
+        string+=' '*(group_count*align-len(string))
+
+            
 
 
         #===================================================
         # plain text and key padding to standard length
         # then use key expansion:
 
-        self.plaintext=padding_plaintext(string,self.mode)
+        self.plaintext=padding_plaintext(string,group_count,self.mode)
         self.key=padding_key(key,self.mode)
-        self.key=key_Expand(self.key,mode)
-
+        self.key=key_Expand(self.key,self.mode)
 
 
         #====================================================
         # after key expansion,
         # start to encrypt plain text, which is used by State
 
+        for g in range(0,group_count):
+            for i in range(0,self.Nr):
+                self.plaintext[g]=SubBytes(self.plaintext[g],0)
+                self.plaintext[g]=ShiftRows(self.plaintext[g],0)
+                self.plaintext[g]=MixColumns(self.plaintext[g],0)
+                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i,0)
 
-        
+
+        self.ciphertext=copy_cipher_text(self.plaintext)
+        # plain text -> cipher text
+        #===================================================
+        # here to decrypt:
+
+        for g in range(0,group_count):
+            for i in range(0,self.Nr):
+                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i,1)
+                self.plaintext[g]=MixColumns(self.plaintext[g],1)
+                self.plaintext[g]=ShiftRows(self.plaintext[g],1)
+                self.plaintext[g]=SubBytes(self.plaintext[g],1)
+
+
+
+
 
 
 
@@ -341,18 +469,28 @@ class AES(object):
 
     def show(self):
 
+
         print 'plain text:'
         for i in range(0,len(self.plaintext)):
             print 'Group '+str(i)+':'
             for j in self.plaintext[i]:
                 print j
+        print '\n'
 
 
         print '\nkey after expanded:'
         print 'length:'+str(len(self.key))
         for i in range(0,len(self.key)):
             print self.key[i]
+        print '\n'
 
+
+        print 'cipher text:'
+        for i in range(0,len(self.ciphertext)):
+            print 'Group '+str(i)+':'
+            for j in self.ciphertext[i]:
+                print j
+        print '\n'
 
 
 
@@ -360,5 +498,6 @@ if __name__ == '__main__':
     
     a=AES()
     
-    a.initAES('aaaaaa','bbbbbbb',192)
+    a.initAES('aaaaaa','bbbbbbb',256)
     a.show()
+
