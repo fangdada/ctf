@@ -327,15 +327,12 @@ def MixColumns(plain_text,rev):
 
 
 
-def AddRoundKey(plain_text,key,sum_round,key_round,rev):
+def AddRoundKey(plain_text,key,sum_round,key_round):
 
     temp=[]
 
-    if rev==1:
-        key_round=sum_round-key_round-1
-
     for i in range(0,len(rotate(plain_text))):
-        temp.append(xor(rotate(plain_text)[i],key[(key_round+1)*4]))
+        temp.append(xor(rotate(plain_text)[i],key[key_round*4]))
 
     temp=rotate(temp)
     
@@ -439,24 +436,35 @@ class AES(object):
         # start to encrypt plain text, which is used by State
 
         for g in range(0,group_count):
-            for i in range(0,self.Nr):
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,0)
+            for i in range(1,self.Nr):
                 self.plaintext[g]=SubBytes(self.plaintext[g],0)
                 self.plaintext[g]=ShiftRows(self.plaintext[g],0)
                 self.plaintext[g]=MixColumns(self.plaintext[g],0)
-                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i,0)
+                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i)
+            self.plaintext[g]=SubBytes(self.plaintext[g],0)
+            self.plaintext[g]=ShiftRows(self.plaintext[g],0)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,self.Nr)
 
 
         self.ciphertext=copy_cipher_text(self.plaintext)
+
         # plain text -> cipher text
-        #===================================================
+        # here is a 0-round, which is just an AddRoundKey method
+        # and the last-round that doesn't contain MixColumns
+        #====================================================
         # here to decrypt:
 
         for g in range(0,group_count):
-            for i in range(0,self.Nr):
-                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i,1)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,self.Nr)
+            self.plaintext[g]=ShiftRows(self.plaintext[g],1)
+            self.plaintext[g]=SubBytes(self.plaintext[g],1)
+            for i in range(self.Nr-1,0,-1):
+                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i)
                 self.plaintext[g]=MixColumns(self.plaintext[g],1)
                 self.plaintext[g]=ShiftRows(self.plaintext[g],1)
                 self.plaintext[g]=SubBytes(self.plaintext[g],1)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,0)
 
 
 
