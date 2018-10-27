@@ -1,5 +1,6 @@
 import binascii
 import sys
+from aes_tools import AES_tools
 
 # S-box
 sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
@@ -70,7 +71,7 @@ InvMixMatrix=[[0xe,0xb,0xd,9],[9,0xe,0xb,0xd],[0xd,9,0xe,0xb],[0xb,0xd,9,0xe]]
 
 
 # look up for Nr by AES-mode
-r={'128':10,'192':12,'256':14}
+r={'128':10,'192':12,'256':14,'test':4}
 
 
 # get one byte for a 32-bits num
@@ -149,7 +150,7 @@ def matrix_multi(m1,m2):
 
 
 
-def padding_plaintext(string,group_count,mode):
+def padding_plaintext(string,group_count):
 
     text_set=[]
     Nb=4
@@ -157,7 +158,7 @@ def padding_plaintext(string,group_count,mode):
     for i in range(0,group_count):
         text_set.append([])
         for j in range(0,Nb):
-            text_set[i].append(list(ord(k) for k in string[j*4:(j+1)*4:]))
+            text_set[i].append(list(ord(k) for k in string[i*16+j*4:i*16+(j+1)*4:]))
         text_set[i]=rotate(text_set[i])
 
     return text_set
@@ -327,18 +328,32 @@ def MixColumns(plain_text,rev):
 
 
 
-def AddRoundKey(plain_text,key,sum_round,key_round):
+def AddRoundKey(plain_text,key,key_round):
 
     temp=[]
 
     for i in range(0,len(rotate(plain_text))):
-        temp.append(xor(rotate(plain_text)[i],key[key_round*4]))
+        temp.append(xor(rotate(plain_text)[i],key[key_round*4+i]))
 
     temp=rotate(temp)
-    
 
     return temp
 
+
+def last_round_decrypt(plain_text,key):
+
+    temp=[]
+
+    for i in plain_text:
+        temp.append(i)
+
+    temp=AddRoundKey(temp,key,0)
+    temp=ShiftRows(temp,1)
+    temp=SubBytes(temp,1)
+
+    return temp
+
+    
 
 
 #===========================================
@@ -419,14 +434,13 @@ class AES(object):
         group_count=len(string)/align if len(string)%align==0 else len(string)/align+1
         string+=' '*(group_count*align-len(string))
 
-            
 
 
         #===================================================
         # plain text and key padding to standard length
         # then use key expansion:
 
-        self.plaintext=padding_plaintext(string,group_count,self.mode)
+        self.plaintext=padding_plaintext(string,group_count)
         self.key=padding_key(key,self.mode)
         self.key=key_Expand(self.key,self.mode)
 
@@ -435,16 +449,18 @@ class AES(object):
         # after key expansion,
         # start to encrypt plain text, which is used by State
 
+        print 'x3 pair:'
         for g in range(0,group_count):
-            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,0)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,0)
             for i in range(1,self.Nr):
                 self.plaintext[g]=SubBytes(self.plaintext[g],0)
                 self.plaintext[g]=ShiftRows(self.plaintext[g],0)
                 self.plaintext[g]=MixColumns(self.plaintext[g],0)
-                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i)
+                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,i)
+            print self.plaintext[g][0][0]
             self.plaintext[g]=SubBytes(self.plaintext[g],0)
             self.plaintext[g]=ShiftRows(self.plaintext[g],0)
-            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,self.Nr)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr)
 
 
         self.ciphertext=copy_cipher_text(self.plaintext)
@@ -456,56 +472,216 @@ class AES(object):
         # here to decrypt:
 
         for g in range(0,group_count):
-            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,self.Nr)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr)
             self.plaintext[g]=ShiftRows(self.plaintext[g],1)
             self.plaintext[g]=SubBytes(self.plaintext[g],1)
             for i in range(self.Nr-1,0,-1):
-                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,i)
+                self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,i)
                 self.plaintext[g]=MixColumns(self.plaintext[g],1)
                 self.plaintext[g]=ShiftRows(self.plaintext[g],1)
                 self.plaintext[g]=SubBytes(self.plaintext[g],1)
-            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr,0)
+            self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,0)
 
 
 
 
 
+    def auto_diff_analy(self,string,key,mode):
+
+        self.Nr=4
+        self.initAES(string,key,'test')
+        ciphertext=[]
+        ciphertext_bak=[]
+        count=0
+
+
+        for i in self.ciphertext:
+            ciphertext.append(i)
+            ciphertext_bak.append(i)
+
+
+        possible_key=set([i for i in range(0,256)])
+        blank=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+
+        '''
+        for k in range(0,256):
+
+            #possible_key=set([i for i in range(0,256)])
+            key=[[k,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+            test1=[[],[],[],[]]
+            test2=[[],[],[],[]]
+
+            for i in range(0,len(ciphertext)):
+                ciphertext[i]=last_round_decrypt(ciphertext_bak[i],key)
+
+
+            #for i in range(0,4):
+            #    test1[i]=xor(ciphertext[0][i],ciphertext[1][i])
+            #    test2[i]=xor(last_round_decrypt(ciphertext_bak[0],blank)[i],last_round_decrypt(ciphertext_bak[1],blank)[i])
+
+
+            #for i in range(1,len(ciphertext_bak)):
+            #    if ciphertext_bak[0][0][0]==ciphertext_bak[i][0][0]:
+            #        print 'got it:'+str(k)+' and the i:'+str(i)
+
+
+            for i in range(1,len(ciphertext)):
+                if ciphertext[0][0][0]==ciphertext[i][0][0]:
+                    print ciphertext[i]
+                    print 'got it:'+str(k)+' and the i:'+str(i)
+                    possible_key-=set([ciphertext[i][0][0]])
+                    #break
+
+        print 'target key:'+str(self.key[4*4+3][0])
+        print possible_key
+        '''
+
+
+        #for i in range(1,256):
+
+            #key=[[i,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+
+            #print self.ciphertext[255]
+            #recorver=last_round_decrypt(self.ciphertext[255],key)[0][0]
+            #print recorver
+            #return ''
+
+            #if self.ciphertext[255][0][0]==sbox[(recorver>>4)*0x10+(recorver&0xf)]:
+            #    print 'got it, key is'+str(i)
+            #    break
+
+            #print self.ciphertext[0][0][0]^self.ciphertext[1][0][0]
+            #print last_round_decrypt(self.ciphertext[0],key)[0][0]^last_round_decrypt(self.ciphertext[1],key)[0][0]
+
+        #print self.ciphertext[0][0][0]^self.ciphertext[1][0][0]
+        #print last_round_decrypt(self.ciphertext[0],key)[0][0]^last_round_decrypt(self.ciphertext[1],key)[0][0]
+
+        #return ''
+
+
+        key=[[0x3,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+
+        print 'x4 cipher pair:'
+        print self.ciphertext[0][0][0]
+        print self.ciphertext[1][0][0]
+        print
+
+        #x3=54
+        #X3=201
+        #print sbox[((x3>>4)*0x10)+(x3&0xf)]^sbox[((X3>>4)*0x10)+(X3&0xf)]
+
+        x3=last_round_decrypt(self.ciphertext[0],key)[0][0]
+        X3=last_round_decrypt(self.ciphertext[1],key)[0][0]
+        x4=self.ciphertext[0][0][0]
+        X4=self.ciphertext[1][0][0]
+        print 'guess x3 cipher pair:'
+        print str(x3)+' '+str(X3)
+        print 'guess key x3 xor:'
+        print x3^X3
+        print 'sbox xor:'
+        print sbox[((x3>>4)*0x10)+(x3&0xf)]^sbox[((X3>>4)*0x10)+(X3&0xf)]
+        print 'right xor:'
+        print self.ciphertext[0][0][0]^self.ciphertext[1][0][0]
+
+        print 'our key:'+hex(key[0][0])[2:]
+        print 'target key:'+hex(self.key[self.Nr*4][0])[2:]
+        return ''
+
+
+
+        for i in range(1,len(ciphertext_bak)):
+
+            print i
+            for k in range(0,256):
+
+                key=[[k,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+                ciphertext[0]=last_round_decrypt(ciphertext_bak[0],key)
+                ciphertext[i]=last_round_decrypt(ciphertext_bak[i],key)
+
+                #print ciphertext_bak[0][0][0]^ciphertext_bak[i][0][0],
+                #print ciphertext[0][0][0]^ciphertext[i][0][0]
+
+                if ciphertext[0][0][0]^ciphertext[i][0][0]==ciphertext_bak[i][0][0]^ciphertext_bak[0][0][0]:
+                    print 'got it:'+str(k)
+                    possible_key-=set([k])
+
+        print possible_key
+
+        print 'target key:'+str(self.key[4*4+3][0])
+
+
+
+        
+
+
+
+    def show_xor(self):
+
+        print 'plain text pairs:'
+        for i in range(0,len(self.plaintext)/2):
+            print 'pair '+str(i)+':'
+            for a,b in zip(self.plaintext[i],self.plaintext[i+1]):
+                print xor(a,b)
+        print '\n'
+
+        print 'cipher text pairs:'
+        for i in range(0,len(self.ciphertext)/2):
+            print 'pair '+str(i)+':'
+            for a,b in zip(self.ciphertext[i],self.ciphertext[i+1]):
+                print xor(a,b)
+        print '\n'
 
 
 
 
 
-    def show(self):
+    def show(self,show_key=0):
 
-
+        '''
         print 'plain text:'
         for i in range(0,len(self.plaintext)):
             print 'Group '+str(i)+':'
             for j in self.plaintext[i]:
                 print j
         print '\n'
+        '''
 
+        if show_key==1:
+            print '\nkey after expanded:'
+            print 'length:'+str(len(self.key))
+            for i in self.key:
+                for j in i:
+                    print hex(j)[2:],
+                print 
+            print '\n'
 
-        print '\nkey after expanded:'
-        print 'length:'+str(len(self.key))
-        for i in range(0,len(self.key)):
-            print self.key[i]
-        print '\n'
-
-
+        '''
         print 'cipher text:'
         for i in range(0,len(self.ciphertext)):
             print 'Group '+str(i)+':'
-            for j in self.ciphertext[i]:
-                print j
+            for j in rotate(self.ciphertext[i]):
+                for k in j:
+                    print hex(k)[2:],
+                print 
         print '\n'
-
+        '''
 
 
 if __name__ == '__main__':
     
     a=AES()
-    
-    a.initAES('aaaaaa','bbbbbbb',256)
-    a.show()
+
+    #strings=AES_tools().change_first_byte('wohehehehe',255)
+    strings=AES_tools().change_first_byte('wellwellwell',1)
+
+    #a.initAES(strings,'bbbbbbbb',128)
+    #a.auto_diff_analy(strings,'01234567',128)
+    a.auto_diff_analy(strings,'0123456789abcdef',128)
+
+    #a.show(1)
+    #a.show_xor()
+
+
+
+
 
