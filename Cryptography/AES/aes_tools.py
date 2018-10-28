@@ -10,6 +10,9 @@ class AES_tools(object):
 
     def change_first_byte(self,string,count=1):
 
+        if len(string)>16:
+            return 'string to be changed no more than 16 bytes'
+
         seed=string[0]
         strings=self.padding_string(string)
         result=strings

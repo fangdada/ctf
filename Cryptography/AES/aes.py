@@ -1,5 +1,6 @@
 import binascii
 import sys
+from collections import Counter
 from aes_tools import AES_tools
 
 # S-box
@@ -398,6 +399,9 @@ class AES(object):
 
     ciphertext=[]
 
+    analy_count=0
+    diff_possible_set=[[] for _ in range(0,16)]
+
     def __doc__(self):
 
         print '\n'
@@ -449,7 +453,6 @@ class AES(object):
         # after key expansion,
         # start to encrypt plain text, which is used by State
 
-        print 'x3 pair:'
         for g in range(0,group_count):
             self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,0)
             for i in range(1,self.Nr):
@@ -457,7 +460,6 @@ class AES(object):
                 self.plaintext[g]=ShiftRows(self.plaintext[g],0)
                 self.plaintext[g]=MixColumns(self.plaintext[g],0)
                 self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,i)
-            print self.plaintext[g][0][0]
             self.plaintext[g]=SubBytes(self.plaintext[g],0)
             self.plaintext[g]=ShiftRows(self.plaintext[g],0)
             self.plaintext[g]=AddRoundKey(self.plaintext[g],self.key,self.Nr)
@@ -492,7 +494,6 @@ class AES(object):
         self.initAES(string,key,'test')
         ciphertext=[]
         ciphertext_bak=[]
-        count=0
 
 
         for i in self.ciphertext:
@@ -500,118 +501,83 @@ class AES(object):
             ciphertext_bak.append(i)
 
 
-        possible_key=set([i for i in range(0,256)])
-        blank=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-
-        '''
-        for k in range(0,256):
-
-            #possible_key=set([i for i in range(0,256)])
-            key=[[k,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-            test1=[[],[],[],[]]
-            test2=[[],[],[],[]]
-
-            for i in range(0,len(ciphertext)):
-                ciphertext[i]=last_round_decrypt(ciphertext_bak[i],key)
+        possible_key=[]
 
 
-            #for i in range(0,4):
-            #    test1[i]=xor(ciphertext[0][i],ciphertext[1][i])
-            #    test2[i]=xor(last_round_decrypt(ciphertext_bak[0],blank)[i],last_round_decrypt(ciphertext_bak[1],blank)[i])
+        for s in range(0,16):
 
+            key=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-            #for i in range(1,len(ciphertext_bak)):
-            #    if ciphertext_bak[0][0][0]==ciphertext_bak[i][0][0]:
-            #        print 'got it:'+str(k)+' and the i:'+str(i)
-
-
-            for i in range(1,len(ciphertext)):
-                if ciphertext[0][0][0]==ciphertext[i][0][0]:
-                    print ciphertext[i]
-                    print 'got it:'+str(k)+' and the i:'+str(i)
-                    possible_key-=set([ciphertext[i][0][0]])
-                    #break
-
-        print 'target key:'+str(self.key[4*4+3][0])
-        print possible_key
-        '''
-
-
-        #for i in range(1,256):
-
-            #key=[[i,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-
-            #print self.ciphertext[255]
-            #recorver=last_round_decrypt(self.ciphertext[255],key)[0][0]
-            #print recorver
-            #return ''
-
-            #if self.ciphertext[255][0][0]==sbox[(recorver>>4)*0x10+(recorver&0xf)]:
-            #    print 'got it, key is'+str(i)
-            #    break
-
-            #print self.ciphertext[0][0][0]^self.ciphertext[1][0][0]
-            #print last_round_decrypt(self.ciphertext[0],key)[0][0]^last_round_decrypt(self.ciphertext[1],key)[0][0]
-
-        #print self.ciphertext[0][0][0]^self.ciphertext[1][0][0]
-        #print last_round_decrypt(self.ciphertext[0],key)[0][0]^last_round_decrypt(self.ciphertext[1],key)[0][0]
-
-        #return ''
-
-
-        key=[[0x3,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-
-        print 'x4 cipher pair:'
-        print self.ciphertext[0][0][0]
-        print self.ciphertext[1][0][0]
-        print
-
-        #x3=54
-        #X3=201
-        #print sbox[((x3>>4)*0x10)+(x3&0xf)]^sbox[((X3>>4)*0x10)+(X3&0xf)]
-
-        x3=last_round_decrypt(self.ciphertext[0],key)[0][0]
-        X3=last_round_decrypt(self.ciphertext[1],key)[0][0]
-        x4=self.ciphertext[0][0][0]
-        X4=self.ciphertext[1][0][0]
-        print 'guess x3 cipher pair:'
-        print str(x3)+' '+str(X3)
-        print 'guess key x3 xor:'
-        print x3^X3
-        print 'sbox xor:'
-        print sbox[((x3>>4)*0x10)+(x3&0xf)]^sbox[((X3>>4)*0x10)+(X3&0xf)]
-        print 'right xor:'
-        print self.ciphertext[0][0][0]^self.ciphertext[1][0][0]
-
-        print 'our key:'+hex(key[0][0])[2:]
-        print 'target key:'+hex(self.key[self.Nr*4][0])[2:]
-        return ''
-
-
-
-        for i in range(1,len(ciphertext_bak)):
-
-            print i
             for k in range(0,256):
 
-                key=[[k,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-                ciphertext[0]=last_round_decrypt(ciphertext_bak[0],key)
-                ciphertext[i]=last_round_decrypt(ciphertext_bak[i],key)
+                temp=0
+                key[s/4][s%4]=k
 
-                #print ciphertext_bak[0][0][0]^ciphertext_bak[i][0][0],
-                #print ciphertext[0][0][0]^ciphertext[i][0][0]
-
-                if ciphertext[0][0][0]^ciphertext[i][0][0]==ciphertext_bak[i][0][0]^ciphertext_bak[0][0][0]:
-                    print 'got it:'+str(k)
-                    possible_key-=set([k])
-
-        print possible_key
-
-        print 'target key:'+str(self.key[4*4+3][0])
+                for i in range(0,len(ciphertext)):
+                    ciphertext[i]=last_round_decrypt(ciphertext_bak[i],key)
 
 
+                for i in range(0,len(ciphertext)):
+                    temp^=ciphertext[i][s%4][(s%4+s/4)%4]
+            
+                if temp==0:
+                    #print 'guessed key:'+str(k)
+                    possible_key.append(k)
+                    break
 
+
+            #print 'target key:'+str(self.key[4*self.Nr+s/4][s%4])
+
+        print '\nguess key:\t\t',
+        for i,j in zip(possible_key,range(0,16)):
+            print i,
+            self.diff_possible_set[j].append(i)
+        print
+
+        self.analy_count+=1
+
+        '''
+        print 'original key:\t',
+        for i in range(0,4):
+            for j in self.key[self.Nr*4+i]:
+                print j,
+        '''
+
+    def show_analy_result(self):
+
+        if self.analy_count==1:
+            return 'use more strings and call \'auto_diff_analy\' more times to get more nearly result '
+
+        possible_key=[]
+        final_key_set=[]
+        n=self.analy_count
+        count=0
+
+
+        for i in self.diff_possible_set:
+            print i
+        print 
+
+        for i in self.diff_possible_set:
+            final_key_set.append(Counter(i).most_common(1)[0][0])
+
+        print 'final guess key:\t',
+        for i in final_key_set:
+            print i,
+        print
+
+
+
+
+        print 'original key:\t\t',
+        for i in range(0,4):
+            for j in self.key[self.Nr*4+i]:
+                print j,
+        print 
         
+        return possible_key
+
+
 
 
 
@@ -671,12 +637,30 @@ if __name__ == '__main__':
     
     a=AES()
 
-    #strings=AES_tools().change_first_byte('wohehehehe',255)
-    strings=AES_tools().change_first_byte('wellwellwell',1)
+    strings=AES_tools().change_first_byte('hhhhhhhhhhhhhhhh',255)
+    a.auto_diff_analy(strings,'hellhellhellhell',128)
+    a.show_analy_result()
 
-    #a.initAES(strings,'bbbbbbbb',128)
-    #a.auto_diff_analy(strings,'01234567',128)
-    a.auto_diff_analy(strings,'0123456789abcdef',128)
+    strings=AES_tools().change_first_byte('hellhellhellhell',255)
+    a.auto_diff_analy(strings,'hellhellhellhell',128)
+    a.show_analy_result()
+
+    strings=AES_tools().change_first_byte('wohehehehe',255)
+    a.auto_diff_analy(strings,'hellhellhellhell',128)
+    a.show_analy_result()
+
+    strings=AES_tools().change_first_byte('wellwellwell',255)
+    a.auto_diff_analy(strings,'hellhellhellhell',128)
+    a.show_analy_result()
+
+    strings=AES_tools().change_first_byte('hello,world',255)
+    a.auto_diff_analy(strings,'hellhellhellhell',128)
+    a.show_analy_result()
+
+    strings=AES_tools().change_first_byte('023348953asdz',255)
+    a.auto_diff_analy(strings,'hellhellhellhell',128)
+    a.show_analy_result()
+
 
     #a.show(1)
     #a.show_xor()
