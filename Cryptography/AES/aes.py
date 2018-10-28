@@ -104,6 +104,18 @@ def XOR(w,r):
     return temp
 
 
+
+# matrix GF(8) multiplication
+# support common multiplication
+#
+#   MixMatrix
+#   
+#   |  2  3  1  1  |     |  x1  x5  x9   x13  |
+#   |  1  2  3  1  |  X  |  x2  x6  x10  x14  |     ====>
+#   |  1  1  2  3  |     |  x3  x7  x11  x15  |     ====>
+#   |  3  1  1  2  |     |  x4  x8  x12  x16  |
+#
+
 def matrix_multi(m1,m2):
 
     result=[]
@@ -172,7 +184,7 @@ def padding_plaintext(string,group_count):
 #==================================================
 # key_set will be filled like:
 #
-#           Nk-bytes w[Nk]
+#           Nk(bytes) w[Nk]
 #       _______________________
 #   Nk  |______________________
 #       |______________________
@@ -282,6 +294,19 @@ def g(w,count,Nk):
     return XOR(temp,Rcon[count/Nk-1])
 
 
+
+
+# SubBtyes 
+#
+#   input:                output:
+#                SBOX
+#       X1X2    =====>   X1'X2'
+#       
+#   example:
+#                SBOX
+#       0xAB    =====>    0x62
+#
+
 def SubBytes(plain_text,rev):
 
     temp=[]
@@ -301,6 +326,24 @@ def SubBytes(plain_text,rev):
     return temp
     
 
+
+
+
+# ShiftRows
+#
+#   input:                      output:
+#       _____________           ____________
+#       |0 |4 |8 |c |           |0 |4 |8 |c |
+#       |1 |2 |3 |4 |   ====>   |2 |3 |4 |1 |
+#       |2 |6 |a |e |   ====>   |a |e |2 |6 |
+#       |3 |7 |b |f |           |f |3 |7 |b |
+#       
+#   0 row: left move 0 byte
+#   1 row: left move 1 bytes
+#   2 row: left move 2 bytes
+#   3 row: left move 3 bytes
+#
+
 def ShiftRows(plain_text,rev):
 
     temp=[]
@@ -319,6 +362,12 @@ def ShiftRows(plain_text,rev):
 
 
 
+
+# GF(8) multiplication
+# here
+# return to matrix multiplcation
+# just do not forget it's GF(8)
+
 def MixColumns(plain_text,rev):
 
     if rev==0:
@@ -328,6 +377,24 @@ def MixColumns(plain_text,rev):
 
 
 
+
+
+# in GF(8)
+# ADD is just XOR
+# so just XOR key with State
+#
+#   State:                      KEY:
+#   _____________           ____________
+#   |0 |4 |8 |c |           |0 |1 |2 |3 |
+#   |1 |2 |3 |4 |           |4 |5 |6 |7 |
+#   |2 |6 |a |e |   XOR     |8 |9 |a |b |
+#   |3 |7 |b |f |           |c |d |e |f |
+#   
+# 0 xor 0
+# 1 xor 1
+# 2 xor 2
+# .......
+# so you can rotate the STATE and then xor with the KEY one by one
 
 def AddRoundKey(plain_text,key,key_round):
 
@@ -340,6 +407,13 @@ def AddRoundKey(plain_text,key,key_round):
 
     return temp
 
+
+
+
+# used for reduced round AES impossible differential analysis
+# decrypt the last round
+# don't forget that the last round just contain
+# SUBBYTES and SHIFTROWS and ADDROUNDKEY
 
 def last_round_decrypt(plain_text,key):
 
@@ -358,9 +432,33 @@ def last_round_decrypt(plain_text,key):
 
 
 #===========================================
-# GF(2^8) multiplication
-# waiting....
+# GF(2^8) multiplication:
+# in GF,
+# a*0x01 is just 'a' itself
 #
+# a+a is
+# a xor a = 0
+#
+# a*0x02
+# can be like:
+#
+#   if a&0x80:
+#       a=((a<<1)&0xff)^0x1b
+#   else:
+#       a=(a<<1)&0xff
+#
+# a*0x03
+# can be like:
+#
+#   a=a*0x02+a
+#
+# a*0x09
+# can be like:
+#
+#   a=a*0x02*0x02*0x02+a
+# 
+# etc.
+
 
 def GF_multi(source_num,multi_num):
  
@@ -488,6 +586,11 @@ class AES(object):
 
 
 
+    #=======================================================================
+    # auto impossible differential analysis for reduced AES encrypt-round
+    # more string to diff-analy, closer the real key
+    # finally we derive the original key (k0)
+
     def auto_diff_analy(self,string,key,mode):
 
         self.Nr=4
@@ -504,6 +607,14 @@ class AES(object):
         possible_key=[]
 
 
+
+        # ***************************************************************
+        # *if the xor of all the values of each bytes is 0,
+        # *then the key of the last round is mostly the right key.
+        # *We can check and close the real key by
+        # *input more delta-set, whose first byte is different with
+        # *the other STATEs', but other bytes is the same.
+        # ******************************************************************
         for s in range(0,16):
 
             key=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
@@ -526,8 +637,6 @@ class AES(object):
                     break
 
 
-            #print 'target key:'+str(self.key[4*self.Nr+s/4][s%4])
-
         print '\nguess key:\t\t',
         for i,j in zip(possible_key,range(0,16)):
             print i,
@@ -536,12 +645,15 @@ class AES(object):
 
         self.analy_count+=1
 
-        '''
-        print 'original key:\t',
-        for i in range(0,4):
-            for j in self.key[self.Nr*4+i]:
-                print j,
-        '''
+
+
+
+
+
+    #============================================
+    # after collect the possible keys
+    # show the  result
+    # and all the possible key set
 
     def show_analy_result(self):
 
@@ -567,8 +679,6 @@ class AES(object):
         print
 
 
-
-
         print 'original key:\t\t',
         for i in range(0,4):
             for j in self.key[self.Nr*4+i]:
@@ -581,36 +691,36 @@ class AES(object):
 
 
 
+    #============================================================
+    # you can check the xor-input pairs by call this function
+    # the differential first byte is from 1->255
+
     def show_xor(self):
 
         print 'plain text pairs:'
-        for i in range(0,len(self.plaintext)/2):
+        for i in range(1,len(self.plaintext)):
             print 'pair '+str(i)+':'
-            for a,b in zip(self.plaintext[i],self.plaintext[i+1]):
+            for a,b in zip(self.plaintext[0],self.plaintext[i]):
                 print xor(a,b)
         print '\n'
 
         print 'cipher text pairs:'
-        for i in range(0,len(self.ciphertext)/2):
+        for i in range(1,len(self.ciphertext)):
             print 'pair '+str(i)+':'
-            for a,b in zip(self.ciphertext[i],self.ciphertext[i+1]):
+            for a,b in zip(self.ciphertext[0],self.ciphertext[i]):
                 print xor(a,b)
         print '\n'
 
 
 
 
+    #============================================
+    # just show keys after expansion
+    # call show(1)
+    # show all the ciphter text and plain text
+    # call show(1,1)
 
-    def show(self,show_key=0):
-
-        '''
-        print 'plain text:'
-        for i in range(0,len(self.plaintext)):
-            print 'Group '+str(i)+':'
-            for j in self.plaintext[i]:
-                print j
-        print '\n'
-        '''
+    def show(self,show_key=0,show_all=0):
 
         if show_key==1:
             print '\nkey after expanded:'
@@ -621,49 +731,65 @@ class AES(object):
                 print 
             print '\n'
 
-        '''
-        print 'cipher text:'
-        for i in range(0,len(self.ciphertext)):
-            print 'Group '+str(i)+':'
-            for j in rotate(self.ciphertext[i]):
-                for k in j:
-                    print hex(k)[2:],
-                print 
-        print '\n'
-        '''
+        if show_all==1:
+            print 'plain text:'
+            for i in range(0,len(self.plaintext)):
+                print 'Group '+str(i)+':'
+                for j in self.plaintext[i]:
+                    print j
+            print '\n'
+
+
+            print 'cipher text:'
+            for i in range(0,len(self.ciphertext)):
+                print 'Group '+str(i)+':'
+                for j in rotate(self.ciphertext[i]):
+                    for k in j:
+                        print hex(k)[2:],
+                    print 
+            print '\n'
+
+
+
 
 
 if __name__ == '__main__':
     
     a=AES()
 
+    # first time
     strings=AES_tools().change_first_byte('hhhhhhhhhhhhhhhh',255)
     a.auto_diff_analy(strings,'hellhellhellhell',128)
     a.show_analy_result()
 
+    # second time
     strings=AES_tools().change_first_byte('hellhellhellhell',255)
     a.auto_diff_analy(strings,'hellhellhellhell',128)
     a.show_analy_result()
 
+    # third time
     strings=AES_tools().change_first_byte('wohehehehe',255)
     a.auto_diff_analy(strings,'hellhellhellhell',128)
     a.show_analy_result()
 
+    # fourth time
     strings=AES_tools().change_first_byte('wellwellwell',255)
     a.auto_diff_analy(strings,'hellhellhellhell',128)
     a.show_analy_result()
 
+    # closer
     strings=AES_tools().change_first_byte('hello,world',255)
     a.auto_diff_analy(strings,'hellhellhellhell',128)
     a.show_analy_result()
-
+ 
+    # got it
     strings=AES_tools().change_first_byte('023348953asdz',255)
     a.auto_diff_analy(strings,'hellhellhellhell',128)
     a.show_analy_result()
 
 
     #a.show(1)
-    #a.show_xor()
+    a.show_xor()
 
 
 
