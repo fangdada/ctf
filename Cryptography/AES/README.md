@@ -1,4 +1,4 @@
-# AES差分分析
+# AES不可能差分分析
 ## Author: fanda
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>AES比DES难一些，开始需要一些理论上的知识，并且加密过程也没有DES那样简单的替换异或，因此还是比较复杂的，但效率和安全性都比DES高。因此相对DES，AES以及其他Hash之类的差分攻击研究也更有需要一些。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>老样子，要自己实现差分的话首先要有这么一个加密模型，重复造个轮子，用python写个简单的AES，类似DES，还是持续性更新，从完成基本的加密开始吧:)</font></br>
@@ -8,7 +8,7 @@
 - beta2
 > 实现了基本的加解密功能
 - beta3
-> 实现了基本的减轮AES的差分攻击（4轮）
+> 实现了基本的减轮AES的不可能差分攻击（4轮）
 - beta4
 > waiting...
 
