@@ -506,8 +506,12 @@ class AES(object):
         print 'Author: fanda    mail:1278466220@qq.com'
         print 'This AES program support AES-128, AES-192, AES-256 \n'
         print 'use initAES(<plain text>,<key>,<mode>) to initialize a AES-standard cipher text and key.'
+        print 'use auto_diff_analy(<plain text>,<key>,<mode>) to auto attack a reduced 4-round AES use impossible differential analysis, which calls a spceial \'initAES\' inside.',
+        print '\nMore times called, closer the result'
+        print 'use show_analy_result() to show the result of auto-differential-analysis\n'
+
         print 'use show(flag1,flag2)    flag1 set 1 to show cipher text and key, flag2 set 1 to show nothing now :)'
-        print ''
+        print 'use show_xor()           show the xor of all the plaintext pairs and ciphertext pairs\n'
 
 
 
@@ -755,6 +759,7 @@ class AES(object):
 
 if __name__ == '__main__':
     
+    '''
     a=AES()
 
     # first time
@@ -790,7 +795,9 @@ if __name__ == '__main__':
 
     #a.show(1)
     a.show_xor()
+    '''
 
+    AES().__doc__()
 
 
 
