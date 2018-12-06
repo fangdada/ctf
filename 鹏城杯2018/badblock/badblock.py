@@ -34,8 +34,5 @@ for i in range(4):
     for j in range(len(recorver)-1,0,-1):
         recorver[j]^=recorver[j-1]
 
-for i in recorver:
-    Flag+=chr(i)
-
-print Flag
+print ''.join(map(chr,recorver))
 
