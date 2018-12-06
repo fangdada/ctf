@@ -1,5 +1,5 @@
 # RNote3
-## Author: 文火
+## Author: Wenhuo
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>先贴一下我学习的**NBUSEC**队伍的[原wp](https://github.com/sajjadium/ctf-writeups/blob/master/RCTF/2018/RNote3/rnote3_exploit.py)，我在这里解析一下。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这题二进制程序保护全开，只有一个libc可以改写GOT，同样通过覆盖libc中的地址来getshell，跟babyheap一样，得到oneshot的地址**0x4526a**和__free_hook的地址**0x3c67a8**。接下来开始分析这个二进制程序：</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>整个程序看上去无懈可击，但有一个隐秘的错误，就是一个函数中的ptr指针未初始化，连续调用这个函数的时候，由于ptr的垃圾数据还是上一次的，又可以继续free上次的note，也就是可以任意次数delete同一个note，再加上edit note的函数里的可以写入title的大小过大，最终导致被攻破：</font></br>

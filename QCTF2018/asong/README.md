@@ -1,5 +1,5 @@
 # QCTF2018 asong
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>朴实无华的求逆题，除了思考如何逆运算花点时间之外其他都没啥。所以直接给出脚本了：</font></br>
 

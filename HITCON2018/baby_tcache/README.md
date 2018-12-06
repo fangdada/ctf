@@ -1,5 +1,5 @@
 # HITCON2018 baby_tcache
-## 文火
+## Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>同样也是经典的tcache题，难点在于无法用常规题的show来leak出数据，这里我参考了[bi0s队伍](https://vigneshsrao.github.io/babytcache/)的writeup,利用了_IO_FILE结构的stdout中的_IO_write_ptr-_IO_write_base来扩大输出的范围，从而leak出可以用来计算libc_base的数据达到目的。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>引用一下大佬们的writeup:</font></br>

@@ -1,5 +1,5 @@
 # 湘湖杯2018 Hash
-## 文火
+## Wenhuo
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>典型的逆向题，肝就完事了，下次不想做这种题了太浪费时间。。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>首先来看一下主函数：</font></br>
 

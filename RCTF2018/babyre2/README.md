@@ -1,5 +1,5 @@
 # RCTF2018 babyre2
-## Author: 文火
+## Author: Wenhuo
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>还是打算将以前的wp都放上来方便自己也方便别人一起学习复习了。这篇[脚本](https://bbs.pediy.com/thread-226930.htm)参考看雪里的无名侠大佬复现的。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>整个程序并不难，会用z3的话分分钟就能解出来了，伪代码里诸如_mm_load_si128这样的宏定义比较多，可以参考我放在githuub上的[常用宏定义](https://github.com/fangdada/ctf/tree/master/how2reverse/ida_define.c)找一下。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>至于里面的难点大概就是：</font></br>

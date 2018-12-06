@@ -1,5 +1,5 @@
 # QCTF2018 babyheap
-## Author: 文火
+## Author: Wenhuo
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这题是有tcache机制的libc-2.27的题，为此特意装了一个Ubuntu18（啊还是屈服了，特效真好看真香）。不扯淡了，先放一个tcache的[学习资料](https://www.secpulse.com/archives/71958.html)，嗯这就够了。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>程序逻辑很简单，一眼就看出null byte off by one。因为有tcache的机制(**注意在tcache的堆小于7个，而且不大于0x408**)所以做法特殊一些，这里用shrink chunk的方法来做，这里有个差不多做法的，有[图解](https://bbs.pediy.com/thread-225973.htm)（其实tcache里把小于0x408的堆都看成是不安全的fastbin这样理解会不会更简单些，溜了溜了）。</font></br>
 

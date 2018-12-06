@@ -1,5 +1,5 @@
 # LCTF2017 2ez4u
-## Author: 文火
+## Author: Wenhuo
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>算是我写过的最长的pwn题脚本，学了快一个星期，也收获颇丰，先放上我学习的源地址，同时也推荐这个大佬的，[Sakuraのblog](https://eternalsakura13.com/2018/03/21/lctf2/)，写的非常详细，对前置知识的讲解也很周到，感谢感谢。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>因为Sakura已经把large bin attach的前置知识讲的很清楚了，所以我这里只会补充一下其他没提到的有可能想不到的地方，先放上程序的IDA代码：</font></br>
 **主函数**

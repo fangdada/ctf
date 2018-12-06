@@ -1,5 +1,5 @@
 # 鹏城杯badblock
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这次比赛可以说是很不幸的，因为一个失误没让队友去深圳，太可惜太可惜。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>其实是非常简单的动态跟踪逆向题，只需要对输入进行不断的下断跟踪就能找到flag的匹配处然后就能还原解密算法了。首先先看看程序的关键部分,数据是我动态调试的时候复制的：</font></br>

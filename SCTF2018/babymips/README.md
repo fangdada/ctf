@@ -1,5 +1,5 @@
 # SCTF2018 babymips
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>重感冒躺尸了一星期，这几天才有了一点精神，就把sctf的题再拿出来做一做，mips还是头疼啊，不过好在这题加密不复杂。</font><br>
 

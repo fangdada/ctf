@@ -1,5 +1,5 @@
 # reverse_03
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>CISCN的一个比赛，那个比赛题目收集的不多，那就放这了。这题比较坑，当时比赛时候做着感觉这题目莫不是有问题，后来看了官方wp之后发现脚本都没有，密文仍然跟真正程序里的不一样，但主办方没说有问题那就这样吧，赛后复现了一下发现可真是疯狂。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>main函数逻辑前半部分就是用‘_’分隔字符串加密对比，三个加密函数是这个：</font></br>

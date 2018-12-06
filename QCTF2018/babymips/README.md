@@ -1,5 +1,5 @@
 # QCTF2018 babymips
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>好久不写wp，最近开始做一些以往的题目了，潜心修炼潜心修炼，这次打击真的有点大，高三也没有过这样的大低谷，欸不扯淡了，能力要是真的提升上去了哪还用得着愁这么多呢？</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>从最近的2018QCTF开始吧，babymips主要考研的对mips汇编的了解程度，程序内部逻辑太简单不多讲，看一遍mips指令集再静下心来好好分析分析就能做出了，我差不多还原了一下源代码:</font></br>

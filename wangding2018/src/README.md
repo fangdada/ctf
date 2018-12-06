@@ -1,5 +1,5 @@
 # 网鼎杯第一场 src
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>这道题事后看了别人的wp才知道还能有这种骚操作。。</br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>不知道这个程序什么语言写的，函数名啥的都很长，直接运行会给出这样的字符串：</br>

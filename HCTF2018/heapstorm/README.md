@@ -1,5 +1,5 @@
 # HCTF2018 heapstorm zero
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>经典的堆题，利用了分配largebin时的malloc_consolidate和fastbin attack，我在这里参考了veritas501官方的方法，利用fastbin分配到top指针上进行利用。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>先是阅读了[Eur3kA队伍的NeO]()大佬写的wp得知scanf的一个小技巧，当输入超长字符串传给scanf时，scanf会分配一个临时堆块来暂存，即使已经用setvbuf关闭了缓冲区，所以这就使得这里的null byte off by one漏洞的利用成为了可能，配合largebin的malloc_consolidate得到unsorted bin并且shrink chunk size来达到chunk overlapping。思路讲完了，接下来看看具体的实现步骤，老样子先放程序逻辑代码：</font></br>

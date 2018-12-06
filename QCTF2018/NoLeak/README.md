@@ -1,5 +1,5 @@
 # QCTF2018 NoLeak
-## Author: 文火
+## Author: Wenhuo
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这题主要利用unsorted bin attack和fastbin attack，难点主要就在没有信息可以输出，无法通过常规的方法leak出libc基址来利用，看了官方wp之后发现竟然还可以通过修改libc最低字节来定位到malloc_hook进行修改。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>其他难点也没啥了，那就直接放脚本了。</font></br>
 

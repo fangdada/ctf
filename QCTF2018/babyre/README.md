@@ -1,5 +1,5 @@
 # QCTF2018 babyre
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>这题就比较坑了，程序打开来吓了一跳，这正是我最怕的类型的题目，不知道啥语言写的，程序打开来乱七八糟。看了官方wp后得知是rust写的，于是就搭了个rust环境写了个hello，emmmm我连hello world都看不懂了？折腾了一下只知道了怎么找真正的main函数，好吧，那就动态调试咯。</br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2></font>IDA远程调试Linux程序，启动！在__libc_start_main前下断到main函数，然后反汇编是这样的：</br>

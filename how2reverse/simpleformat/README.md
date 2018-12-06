@@ -1,5 +1,5 @@
 # SUCTF2018 simpleformat
-## Author:文火
+## Author:Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>老样子，还是贴出我学习的[原wp](https://github.com/Mem2019/Mem2019.github.io/tree/master/writeups/suctf2018)，膜一下。程序比较简单，但是能这样用ida python正则表达式来数的大佬还是需要学习一下的，要避免做机械无意义的劳动。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>程序利用了print的format格式里的*和$n配合指定变量大小并用%n赋值来暗含了flag，所以知道了怎么搞到flag就简单了。提取出需要的方程式的参数然后用z3这样的约束器解就可以了。</font></br>

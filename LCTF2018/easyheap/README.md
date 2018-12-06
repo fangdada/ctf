@@ -1,5 +1,5 @@
 # LCTF2018 easyheap
-## Author: 文火
+## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>这题主要的考点就是利用Null byte off by one**伪造freed smallbin**来达到unlink重叠堆块。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>又是一个我以前遗漏的知识点，之前只伪造过largebin，这次学到了free smallbin的检查过程，以前只知道unlink的两个堆块要freed，但不知道其中是怎么判断的，这题虽然只有Null byte off by one漏洞，伪造能力很有限，但是因为程序的堆块空间对齐的非常好，所以依然可以擦除lsb刚好对齐，成功伪造成freed smallbin double link。</font></br>

@@ -1,5 +1,5 @@
 # RCTF magic
-## Author: 文火
+## Author: Wenhuo
 </br>
 </br>
 >整就牛！不管这有多困难，相信你的资质:)

@@ -1,6 +1,6 @@
 from pwn import *
 
-DEBUG = 0
+DEBUG = 1
 
 p = process('./houseoforange')
 elf = ELF('/lib/x86_64-linux-gnu/libc.so.6')

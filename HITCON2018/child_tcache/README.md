@@ -1,5 +1,5 @@
 # HITCON 2018
-## Author:文火
+## Author:Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>是常规的tcache题，所以废话不多说，nullbyte-offbyeone，最难的部分估计就是想不到利用strcpy逐个擦除presize的垃圾0xda数据了（太年轻了我竟然没想到╰（‵□′）╯）。</font></br>
 
