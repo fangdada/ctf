@@ -14,6 +14,8 @@
 - [RCTF2018 RNote3](https://github.com/fangdada/ctf/tree/master/RCTF2018/RNote3)
 - [RCTF2018 babyheap](https://github.com/fangdada/ctf/tree/master/RCTF2018/babyheap)
 - [RCTF2018 stringer](https://github.com/fangdada/ctf/tree/master/RCTF2018/stringer)
+- [tiesan2018 littlenote](https://github.com/fangdada/ctf/tree/master/tiesan2018/littlenote)
+- [tiesan2018 bookstore](https://github.com/fangdada/ctf/tree/master/tiesan2018/bookstore)
 - ...
 
 </br>
