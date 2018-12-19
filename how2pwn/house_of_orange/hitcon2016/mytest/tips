@@ -1,0 +1,27 @@
+#############################################################
+if you `x/20xg & main_arena` in gdb,
+here is the main_arena:
+
++0x00 [                  |        top        ]
++0x08 [   last remainder |  unsorted bin fd  ]
++0x18 [  unsorted bin bk | smallbin 0x20 fd  ]
++0x28 [ smallbin 0x20 bk | smallbin 0x30 fd  ]
++0x38 [ smallbin 0x30 bk | smallbin 0x40 fd  ]
++0x48 [ smallbin 0x40 bk | smallbin 0x50 fd  ]
++0x58 [ smallbin 0x50 bk | smallbin 0x60 fd  ] /* 0x68 */
++0x68 [ smallbin 0x60 bk | smallbin 0x70 fd  ] 
+/*	..................................	*/
+
+
+##############################################################
+(from Veritas501)
+the condition for _IO_flush_all_lockp:
+
+1.fp->_mode <= 0
+2.fp->_IO_write_ptr > fp->_IO_write_base
+
+or
+
+1._IO_vtable_offset (fp) == 0
+2.fp->_mode > 0
+3.fp->_wide_data->_IO_write_ptr > fp->_wide_data->_IO_write_base
