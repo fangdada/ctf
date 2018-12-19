@@ -273,7 +273,7 @@ log.info('chunk base is:'+hex(chunk_base))
 3730	          bck->fd = unsorted_chunks (av);
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>我们可以往任意地址写一个unsortedbin本身的地址，既然可以任意控制unsortedbin，我们可以往\_IO_list_all里写一个地址修改到自己控制的地方去，因为篡改后的_IO_FILE_plus结构有问题，所以会从**_chain找到下一个FILE结构体**，在这里就是**main_arena中的0x60大小的smallbin的bk处**了（无法理解的话看main_arena的作用，还有**how2pwn中的tips**看main_arena结构），然后只要伪造这一个smallbin就相当于可以随意伪造\_IO_FILE_plus结构体了，同时包括vtable（因为libc是**glibc2.23版本的所以可以伪造vtable**，更高的就不行了），利用其结构伪造vtable（看不懂？先看\_IO_FILE的[ctfwiki](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/io_file/fake-vtable-exploit/)），又因为malloc corruption（\_\_libc_message->abort->\_IO_flush_all_lockp->vtable）最终会调用vtable中的\_\_overflow，因此最终劫持流程到getshell。</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>我们可以往任意地址写一个unsortedbin本身的地址，既然可以任意控制unsortedbin，我们可以往\_IO_list_all里写一个地址修改到自己控制的地方去，因为篡改后的_IO_FILE_plus结构有问题，所以会从**chain找到下一个FILE结构体**，在这里就是**main_arena中的0x60大小的smallbin的bk处**了（无法理解的话看main_arena的作用，还有**how2pwn中的tips**看main_arena结构），然后只要伪造这一个smallbin就相当于可以随意伪造\_IO_FILE_plus结构体了，同时包括vtable（因为libc是**glibc2.23版本的所以可以伪造vtable**，更高的就不行了），利用其结构伪造vtable（看不懂？先看\_IO_FILE的[ctfwiki](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/io_file/fake-vtable-exploit/)），又因为malloc corruption（\_\_libc_message->abort->\_IO_flush_all_lockp->vtable）最终会调用vtable中的\_\_overflow，因此最终劫持流程到getshell。</font></br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>如果还是看不懂的话**how2pwn里的orange_shell**实现了这个过程（只是必须用**gdb在调试状态**下跑，不然地址对不上）。剩下的脚本我就直接放了：</font></br>
 
