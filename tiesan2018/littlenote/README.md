@@ -2,7 +2,7 @@
 ## Author: Wenhuo
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>一开始以为总决赛的题目会很难。。后来竟然三题里连我都做出了两题，题目都是glibc2.23的，算是非常经典常规的题目，没有tcache，也没有内核题。</font></br>
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>不多说了，先来看第一题，非常简单，冲脸就是一个**UAF和double free**，要点就在于如何泄露libc地址，这里用scanf就可以很简单的做到（**输入超长字符串给scanf就可以调用malloc分配largebin造成malloc_consolidate**），这里坑就坑在我以为任何字符串都可以Orz，后来发现**\%u,%d之类的只能传数字**，不然输啥都不会malloc largebin。</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>不多说了，先来看第一题，非常简单，冲脸就是一个**UAF和double free**，要点就在于如何泄露libc地址，这里用scanf就可以很简单的做到（**输入超长字符串给scanf就可以调用malloc分配largebin造成malloc\_consolidate**），这里坑就坑在我以为任何字符串都可以Orz，后来发现**像%u,%d之类的只能传数字**，不然输啥都不会malloc largebin。</font></br>
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>老样子先看看IDA分析的伪代码：</font></br>
 
 **main**
