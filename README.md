@@ -3,8 +3,8 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;我个人做过的CTF的bin题收集，有逆向和pwn两个方向。最近主要研究pwn，所以把**how2pwn**改版一下方便自己查阅也方便别人学了（how2reverse可能以后再整理吧嘻嘻），各个知识点都改成**导航去相应题目**的，重复的话说明都涉及了，而且题目放上去的不按难度顺序，所以自行看看难度做吧，题目目录下有个**文件夹how2pwn**，这里面都是讲解要做出这道题目的**前置知识**以及相应的**demo**实现，也就是推荐新手先看的（不是全都有，只有最近复现的题目有，嘻嘻），这样学起来应该比现在清晰一些。那么导航就放在下面了：
 
-**fastbin**
-======
+## fastbin
+
 > 同一组大小的fastbin被free后由fd指针指向前一个freed的chunk，伪造fastbin要注意绕过size check，e.g. 0x70大小的堆块，伪造的size要在0x70-0x7f的区间里。
 
 </br>
@@ -20,8 +20,8 @@
 
 </br>
 
-**largebin**
-=======
+## largebin
+
 > largebin attach相比smallbin多拥有fd_nextsize和bk_nextsize，并且largebin可以用malloc_consolidate吞并fastbin块，利用malloc_consolidate经常可以在只能申请fastbin的情况下生成smallbin来leak地址libc_base。
 
 </br>
@@ -34,8 +34,8 @@
 </br>
 
 
-**tcache**
-======
+## tcache
+
 > 最近tcache机制的pwn题越来越多，因此必须得明白tcache机制与往常glibc2.23等版本的不同处，tcache的安全检查特别少，因此这类题的难点通常就在如何leak出libc基址以及如何创建重叠堆块。
 
 </br>
@@ -47,8 +47,8 @@
 
 </br>
 
-**unlink**
-=====
+## unsafe unlink
+
 > 对刚学堆利用的bin手来说这通常是第一课，目前只放这一题，后续还有largebin下的unlink实现
 
 </br>
@@ -61,8 +61,8 @@
 </br>
 
 
-**_IO_FILE**
-=======
+## _IO_FILE
+
 > PWN中攻击\_IO\_FILE的题通常都是综合unsortedbin attack修改\_IO\_list\_all，利用其\_chain指向可控地址进而篡改vtable来劫持流程的，明白了这一点，熟悉了vtable调用后就有套路可循了。
 
 </br>
@@ -74,3 +74,5 @@
 
 </br>
 
+# how2kernel
+[点这里跳转](https://github.com/fangdada/kernelPWN)
