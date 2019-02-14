@@ -15,7 +15,7 @@
 
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>猜测[0x41+0xea0]的地址存着flag，然后作为0x400770函数的参数调用了strlen，这个move r1,r1的没什么意义，只是为了适应流水线结构出现的。看看函数的内部代码，同样可以看到函数开辟栈，保存参数等准备工作。随后就是内部逻辑：</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>猜测[0x410000+0xea0]的地址存着flag，然后作为0x400770函数的参数调用了strlen，这个move r1,r1的没什么意义，只是为了适应流水线结构出现的。看看函数的内部代码，同样可以看到函数开辟栈，保存参数等准备工作。随后就是内部逻辑：</font></br>
 
 ```mips
 [INFO]00400770       addiu r29, r29, 0xffffffe8
