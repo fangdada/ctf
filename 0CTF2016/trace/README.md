@@ -2,7 +2,7 @@
 
 ## Author: fanda
 
-&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>为了学习angr突然又跑来做逆向题。这是一个24800行的trace log，里面是mips汇编，像我这种头铁的人当然是直接分析。log虽然很长但是绝大多数都是函数执行的内部重复代码，其中0x400770是strlen函数，0x4007d0是strcpy函数，0x400858为一个quick sort函数。不懂mips的可以先看看这两篇资料复习一下：[寄存器](https://www.jianshu.com/p/79895392ecb2)，[指令集](https://www.jianshu.com/p/ac2c9e7b1d8f)。那么我们逐段解析一下这个log吧：</font></br>
+&nbsp;&nbsp;&nbsp;&nbsp;<font size=2>为了学习angr突然又跑来做逆向题。这是一个24800行的trace log和一个其纯机器码data.bin（我写了反汇编脚本disas.py可以看这个机器码对应的mips汇编），里面是mips汇编，像我这种头铁的人当然是直接分析。log虽然很长但是绝大多数都是函数执行的内部重复代码，其中0x400770是strlen函数，0x4007d0是strcpy函数，0x400858为一个quick sort函数。不懂mips的可以先看看这两篇资料复习一下：[寄存器](https://www.jianshu.com/p/79895392ecb2)，[指令集](https://www.jianshu.com/p/ac2c9e7b1d8f)。那么我们逐段解析一下这个log吧：</font></br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;<font size=2>首先来看log开头的这部分：</font></br>
 
