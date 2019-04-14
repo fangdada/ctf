@@ -150,6 +150,15 @@
 
 </br>
 
+## 脱壳
+
+>壳分为压缩壳与加密壳，在Windows下加密壳比Linux下的加密壳多，但CTF中大多都是压缩壳，无论是使用脱壳机还是手动脱壳都十分简单，在这里我都用手动的方式脱壳。
+
+</br>
+
+- [DDCTF2019 reverse2](https://github.com/fangdada/ctf/tree/master/how2reverse/ddctf_reverse2)
+
+</br>
 
 ## 待续
 
