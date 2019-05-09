@@ -64,7 +64,7 @@
 
 ## _IO_FILE
 
-> PWN中攻击\_IO\_FILE的题通常都是综合unsortedbin attack修改\_IO\_list\_all，利用其\_chain指向可控地址进而篡改vtable来劫持流程的，明白了这一点，熟悉了vtable调用后就有套路可循了。
+> 首先请移步至对[\_IO_FILE](https://github.com/fangdada/ctf/tree/master/how2pwn/_IO_FILE)的详细分析文章，PWN中攻击\_IO\_FILE的题通常都是综合unsortedbin attack修改\_IO\_list\_all，利用其\_chain指向可控地址进而篡改vtable来劫持流程的，明白了这一点，熟悉了vtable调用后就有套路可循了。
 
 </br>
 
