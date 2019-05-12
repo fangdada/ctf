@@ -6,10 +6,8 @@
 
 int main()
 {
-	void *p1,*p2,*p3;
-
-	free(malloc(0x100));
-	free(malloc(0x20));
+	malloc(0x100);
+	malloc(0x20);
 
 	return 0;
 }
