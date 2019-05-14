@@ -1,88 +1,31 @@
-# How2pwn
-## Author: Wenhuo
+&emsp;&emsp;<font size=2>总结一下Linux堆利用技巧，以最经典的glibc2.23为例。所有exploit的目标程序demo是一个漏洞大礼包，都放在上上面了可以下载。目录如下：</font></br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;初学pwn的话建议移步看看我写的对[malloc原理解析](https://github.com/fangdada/ctf/tree/master/how2pwn/MALLOC)，或者我博客里也有，目前可能文章不多，下面的题目重复的话说明都涉及了，而且题目放上去的不按难度顺序，所以自行看看难度做吧，题目目录下有个**文件夹how2pwn**，这里面都是讲解要做出这道题目的**前置知识**以及相应的**demo**实现，也就是新手基本都推荐先看的（不是全都有，只有最近的复现的题目有，嘻嘻），这样学起来应该比现在清晰一些。那么导航就放在下面了：
+### 开始之前
 
+> 建议先理解Linux内存管理而不是一上来就"背”堆块的行为，这样底子是不牢的，正好前几天得空简单总结了一下malloc和free的原理（不全面，仅入门用），建议和我一样写个demo，并且调试跟踪一下对理解堆非常有好处：
 
+- [malloc原理跟踪分析（一）]([https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc%E5%8E%9F%E7%90%86%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%B8%80%EF%BC%89.md](https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc原理讲解（一）.md))
 
-## Fast bin
+- [malloc原理跟踪分析（二）]([https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc%E5%8E%9F%E7%90%86%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89.md](https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc原理讲解（二）.md))
 
-> 同一组大小的fastbin被free后由fd指针指向前一个freed的chunk，伪造fastbin要注意绕过size check，e.g. 0x70大小的堆块，伪造的size要在0x70-0x7f的区间里。
+- [malloc原理跟踪分析（三）]([https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc%E5%8E%9F%E7%90%86%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%B8%89%EF%BC%89.md](https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc原理讲解（三）.md))
 
-</br>
+- [malloc原理跟踪分析（四）]([https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc%E5%8E%9F%E7%90%86%E8%AE%B2%E8%A7%A3%EF%BC%88%E5%9B%9B%EF%BC%89.md](https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/malloc原理讲解（四）.md))
 
-- [LCTF2016 pwn200](https://github.com/fangdada/ctf/tree/master/how2pwn/house_of_spirit/lctf2016_pwn200)
-- [QCTF2018 NoLeak](https://github.com/fangdada/ctf/tree/master/QCTF2018/NoLeak)
-- [RCTF2018 RNote3](https://github.com/fangdada/ctf/tree/master/RCTF2018/RNote3)
-- [RCTF2018 babyheap](https://github.com/fangdada/ctf/tree/master/RCTF2018/babyheap)
-- [RCTF2018 stringer](https://github.com/fangdada/ctf/tree/master/RCTF2018/stringer)
-- [tiesan2018 littlenote](https://github.com/fangdada/ctf/tree/master/tiesan2018/littlenote)
-- [tiesan2018 bookstore](https://github.com/fangdada/ctf/tree/master/tiesan2018/bookstore)
-- ...
+- [free原理简析]([https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/free%E5%8E%9F%E7%90%86%E7%AE%80%E6%9E%90.md](https://github.com/fangdada/ctf/blob/master/how2pwn/MALLOC/free原理简析.md))
 
 </br>
 
+***
 
+### unsafe unlink
 
-## large bin
+> 非常经典的一个堆溢出利用，我第一次学习这个是在Windows上叫DWORD SHOOT，是因为在老版本中的unlink没有检查，可以达到任意地址写，再后来添加了检查后的版本还想要达到一次SHOOT就比较有限了，但仍然是一个不可低估的漏洞。
 
-> largebin attach相比smallbin多拥有fd_nextsize和bk_nextsize，并且largebin可以用malloc_consolidate吞并fastbin块，利用malloc_consolidate经常可以在只能申请fastbin的情况下生成smallbin来leak地址libc_base。
+- [unsafe unlink漏洞利用剖析]()
 
-</br>
+***
 
-- [LCTF2017 2ez4u](https://github.com/fangdada/ctf/tree/master/LCTF2017/largebin_2ez4u)
-- [HCTF2018 heapstorm](https://github.com/fangdada/ctf/tree/master/HCTF2018/heapstorm)
-- [0CTF2018 heapstorm2](https://github.com/fangdada/ctf/tree/master/0CTF2018/heapstorm2)
-- ...
+### waiting...
 
-</br>
-
-
-
-## cache
-
-> 最近tcache机制的pwn题越来越多，因此必须得明白tcache机制与往常glibc2.23等版本的不同处，tcache的安全检查特别少，因此这类题的难点通常就在如何leak出libc基址以及如何创建重叠堆块。
-
-</br>
-
-- [QCTF2018 babyheap](https://github.com/fangdada/ctf/tree/master/QCTF2018/babyheap)
-- [HITCON2018 children_tcache](https://github.com/fangdada/ctf/tree/master/HITCON2018/child_tcache)
-- [LCTF2018 easy_heap](https://github.com/fangdada/ctf/tree/master/LCTF2018/easyheap)
-- ...
-
-</br>
-
-
-
-## unsafe unlink
-
-> 对刚学堆利用的bin手来说这通常是第一课，目前只放这一题，后续还有largebin下的unlink实现
-
-</br>
-
-- [demo](https://github.com/fangdada/ctf/tree/master/how2pwn/unsafe_unlink)
-- [0CTF2018 heapstorm2](https://github.com/fangdada/ctf/tree/master/0CTF2018/heapstorm2)
-- ...
-
-</br>
-
-
-
-## _IO_FILE
-
-> 首先请移步至对[\_IO_FILE](https://github.com/fangdada/ctf/tree/master/how2pwn/_IO_FILE)的详细分析文章，PWN中攻击\_IO\_FILE的题通常都是综合unsortedbin attack修改\_IO\_list\_all，利用其\_chain指向可控地址进而篡改vtable来劫持流程的，明白了这一点，熟悉了vtable调用后就有套路可循了。
-
-</br>
-
-- [HITCON2016 house\_of\_orange](https://github.com/fangdada/ctf/tree/master/how2pwn/house_of_orange/hitcon2016)
-- [SCTF2018 sbbs](https://github.com/fangdada/ctf/tree/master/SCTF2018/sbbs)
-- [SCTF2018 bufoverflow\_a](https://github.com/fangdada/ctf/tree/master/SCTF2018/bufoverflow_a)
-- ...
-
-</br>
-
-
-
-# how2kernel
-
-[点这里跳转](https://github.com/fangdada/kernelPWN)
+> ...
