@@ -390,6 +390,7 @@ typedef struct malloc_chunk *mbinptr;
 #define unsorted_chunks(M)          (bin_at (M, 1))
 ```
 
-&emsp;&emsp;<font size=2>也就是说直到malloc_init_state这个inline函数结束，所有的bins数组里面都被初始化填上了内容，并且global_max_fast也根据计算被设置为了0x80，这也是fastbin为啥最大只有0x80大小的原因。main_arena的flags置位，并且top堆块也被设置后，malloc_consolidate的初始化工作就结束了（但不知道为啥后面的check_malloc_state函数没有得到执行，这是我gdb跟踪时发现的）。</font></br>
+&emsp;&emsp;<font size=2>也就是说直到malloc_init_state这个inline函数结束，所有的bins数组里面都被初始化填上了内容，并且global_max_fast也根据计算被设置为了0x80，这也是fastbin为啥最大只有0x80大小的原因。main_arena的flags置位，并且top堆块也被设置后，malloc_consolidate的初始化工作就结束了（后面的check_malloc_state函数也是一个inline函数，在返回到_int_malloc的时候才执行，只是用了很多assert做了很多检查罢了）。</font></br>
 
 &emsp;&emsp;<font size=2>那么这篇文章还是就讲到这吧，看了一下接下来分配堆块的地方比较长，本节讲了初始化的工作，应该也足够好好消化了。</font></br>
+
