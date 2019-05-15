@@ -20,7 +20,7 @@
 
 > 非常经典的一个堆溢出利用，我第一次学习这个是在Windows上叫DWORD SHOOT，是因为在老版本中的unlink没有检查，可以达到任意地址写，再后来添加了检查后的版本还想要达到一次SHOOT就比较有限了，但仍然是一个不可低估的漏洞。
 
-- [unsafe unlink漏洞利用剖析]()
+- [unsafe unlink漏洞利用剖析](https://github.com/fangdada/ctf/tree/master/how2pwn/unsafe-unlink)
 
 ***
 
