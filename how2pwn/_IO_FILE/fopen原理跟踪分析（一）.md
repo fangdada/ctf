@@ -1,3 +1,5 @@
+> 环境：glibc2.23
+
 &emsp;&emsp;<font size=2>在Linux下我们可能听说过open函数比较多，open函数由POSIX实现，但C语言标准实现了一个叫fopen的函数，其返回值不是一个可供系统调用的文件句柄，而是一个_IO_FILE指针，本节我们就主要剖析一下C是如何利用这个文件指针来进行文件读写的。老样子先写一个hello，world：</font></br>
 
 ```C
