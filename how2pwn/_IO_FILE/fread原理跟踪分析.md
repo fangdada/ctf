@@ -1,3 +1,5 @@
+> 环境：glibc2.23
+
 &emsp;&emsp;<font size=2>上次我们已经跟踪了一遍fopen的原理，这次我们来跟踪分析一下fread从文件描述符读取内容的过程。这有助于我们进一步了解_IO_FILE结构体，源码如下：</font></br>
 
 ```C
