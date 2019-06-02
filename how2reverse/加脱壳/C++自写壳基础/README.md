@@ -223,4 +223,4 @@ newfile.exe
 
 &emsp;&emsp;<font size=2>最终效果如下：</font></br>
 
-![]()
+![最终效果](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E5%8A%A0%E8%84%B1%E5%A3%B3/C%2B%2B%E8%87%AA%E5%86%99%E5%A3%B3%E5%9F%BA%E7%A1%80/%E6%9C%80%E7%BB%88%E6%95%88%E6%9E%9C.png)
