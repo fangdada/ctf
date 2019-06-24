@@ -4,11 +4,11 @@
 
 &emsp;&emsp;<font size=2>首先跳到main函数处，如下：</font></br>
 
-![main函数]()
+![main函数](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/main.png)
 
 &emsp;&emsp;<font size=2>第一个printf还是非常正常的，第二个函数就经过了虚拟机处理了，push压入的为虚拟机字节码：</font></br>
 
-![第二个函数]()
+![初始化](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/%E5%88%9D%E5%A7%8B%E5%8C%96.png)
 
 ![虚拟机字节码]()
 
@@ -16,27 +16,27 @@
 
 - 0xF6：保存寄存器进入虚拟机环境。
 
-![]()
+![0xF6](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0xF6.png)
 
 - 0x3D：从字节码load出一个虚拟寄存器索引后压栈，此处为ebp。
 
-![]()
+![0x3D](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x3D.png)
 
 - 0x59：将栈上的第一个值压入虚拟环境栈。
 
-![]()
+![0x59](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x59.png)
 
 - 0x65：从字节码load出一个虚拟寄存器索引后出栈赋之，此处为0x2C，ebp。
 
-![]()
+![0x65](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x65.png)
 
 - 0x9A：栈平衡。
 
-![]()
+![0x9A](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x9A.png)
 
 - 0x27：ebp赋给虚拟寄存器esp，相当于更新虚拟栈。
 
-![]()
+![0x27](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x27.png)
 
 &emsp;&emsp;<font size=2>所以上面做了一大堆就是用虚拟机完成了`push ebp`这一指令而已，这一指令经常出现在函数的开头，`push ebp; mov ebp,esp`，那么我们来猜猜下一个虚拟指令是不是mov，字节码顺序如下：</font></br>
 
@@ -44,7 +44,7 @@
 - 0x3D：load了0x2C虚拟寄存器索引，相当于ebp，然后压栈。
 - 0xB5：更新虚拟环境flags寄存器，修改栈中ebp为esp操作。
 
-![]()
+![0xB5](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0xB5.png)
 
 - 0x65：load了0x2C虚拟寄存器索引相当于ebp后出栈赋之。
 - 0x9A：栈平衡。
@@ -54,11 +54,11 @@
 
 - 0x9D：从字节码load一个DWORD后压栈，此处为字符串指针。
 
-![]()
+![0x9D](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x9D.png)
 
 - 0xCD：将栈上的一个DWORD压入虚拟栈。
 
-![]()
+![0xCD](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0xCD.png)
 
 - 0x9A：栈平衡。
 - 0x9A：栈平衡。
@@ -69,10 +69,10 @@
 - 0x9D：从字节码load了一个0xFFFFFFFF后压栈。
 - 0x31：进行了一些莫名的操作，最后压栈printf函数地址：
 
-![]()
+![0x31](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0x31.png)
 
 - 0xC0：从字节码load一个DWORD后压入虚拟栈，再取出printf真实地址后压入虚拟栈，更新虚拟栈，最后将所有的虚拟寄存器赋给了真实寄存器后跳入printf函数。
 
-![]()
+![0xC0](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/0xC0.png)
 
 &emsp;&emsp;<font size=2>到这里最简单的虚拟机demo分析完成了，简单来说就是开辟了一个虚拟环境存放栈和寄存器，然后所有的操作都模拟在了虚拟寄存器和栈中，在需要和系统打交道的时候（比如说调用API函数），就还原虚拟寄存器为真实寄存器后调用，保证环境的衔接无缝才是成功的虚拟化。</font></br>
