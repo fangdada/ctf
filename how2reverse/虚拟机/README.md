@@ -10,7 +10,7 @@
 
 ![初始化](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/%E5%88%9D%E5%A7%8B%E5%8C%96.png)
 
-![虚拟机字节码]()
+![虚拟机字节码](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA/screenshot/%E5%AD%97%E8%8A%82%E7%A0%81.png)
 
 &emsp;&emsp;<font size=2>然后首先保存了所有的寄存器，然后做了抬高栈顶的动作，`sub esp,200`很可能是开辟的虚拟机空间，而`sub esp,40`很可能是开辟了虚拟机的寄存器空间，然后esi指向字节码，这里实际上就进入了一个**dispatcher**，根据字节码跳到相应的虚拟机实现，返回时还会判断开辟的虚拟空间是否够用，不够还会再次分配。各个字节码的意义如下：</font></br>
 
