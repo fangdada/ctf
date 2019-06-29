@@ -1,3 +1,7 @@
+> 建议看本文前先看一下：[一个简单的虚拟机demo](https://github.com/fangdada/ctf/tree/master/how2reverse/%E8%99%9A%E6%8B%9F%E6%9C%BA)
+>
+> 本文环境：win7+x64dbg+vmp1.09
+
 &emsp;&emsp;<font size=2>刚上手的时候作死下了个vmp3.x，被vmp暴打后老老实实下了个vmp1.x跟着教程做，[原文链接](https://bbs.pediy.com/thread-221681.htm)。从最简单的虚拟机开始吧，本次环境就是vmp1.09，去掉所有保护（相当于默认只有虚拟机），然后添加两个例程（一个main函数，一个自定义函数），被保护程序源码如下：</font></br>
 
 ```C
