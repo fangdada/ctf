@@ -160,7 +160,7 @@ int main()
 
 ### 检测虚拟环境
 
-- 其实我这个版本的VMP只有一种，机器码ED的`in eax,bx`特权指令。原理就是，在正常的R3条件下遇到这条指令的程序会触发异常，而虚拟机状态的程序遇到这个会正常执行。绕过方法也有很多，比如修改返回值，或者直接跳过。比较匪夷所思的是Parallels Desktop遇到这个会抛出异常，而VMware会直接运行然后被检测弹窗23333。我是直接跳过了：
+- 其实我这个版本的VMP只有一种，机器码ED的`in eax,dx`特权指令。原理就是，在正常的R3条件下遇到这条指令的程序会触发异常，而虚拟机状态的程序遇到这个会正常执行。绕过方法也有很多，比如修改返回值，或者直接跳过。比较匪夷所思的是Parallels Desktop遇到这个会抛出异常，而VMware会直接运行然后被检测弹窗23333。我是直接跳过了：
 
 ![绕过虚拟机检测](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/VMProtect/VMProtect1.70%E5%88%86%E6%9E%90/screenshot/%E8%B7%B3%E8%BF%87%E8%99%9A%E6%8B%9F%E6%A3%80%E6%B5%8B.png)
 
