@@ -1,4 +1,4 @@
-&emsp;&emsp;<font size=2>VMProtect1.70比起1.09难度增加了许多，变化也比较大了，在关闭所有保护的情况下也有很多垃圾指令混淆，而且立即数也同样是经过加密的。真实寄存器esp指向的真实栈几乎都是用来混淆的，真正 有用的数据都放进了ebp指向的vmp的虚拟栈里。如果你是想分析受vmp保护的程序片段的话你几乎不用看esp，直接看ebp指向的虚拟栈就行了。同时esi仍然指向字节码，也叫VM_Data。edi指向虚拟环境。接下来不多说，我们通过实际的逆向跟踪来分析VMProtect：</font></br>
+&emsp;&emsp;<font size=2VMProtect1.70比起1.09难度增加了许多，变化也比较大了，在关闭所有保护的情况下也有很多垃圾指令混淆，而且立即数也同样是经过加密的。真实寄存器esp指向的真实栈几乎都是用来混淆的，真正 有用的数据都放进了ebp指向的vmp的虚拟栈里。如果你是想分析受vmp保护的程序片段的话你几乎不用看esp，直接看ebp指向的虚拟栈就行了。同时esi仍然指向字节码，也叫VM_Data。edi指向虚拟环境。接下来不多说，我们通过实际的逆向跟踪来分析VMProtect：</font></br>
 
 &emsp;&emsp;<font size=2>我用的专业版VMProtect V1.70，在专家模式下可以自己设定保护的代码片段（或者说基本块），如果直接从entrypoint从头开始保护的话真是看的一头雾水。受保护程序的源码如下：</font></br>
 
@@ -80,6 +80,8 @@ int main()
 
 &emsp;&emsp;<font size=2>VMProtect有自己的一套逻辑，将虚拟寄存器push到栈中，然后以上图的指令方式一个一个放进真实寄存器，还夹杂着垃圾指令。其中`esp+58h`为返回地址，最后一个`ret 54h`平衡栈，至此虚拟机与真实环境算是一个完美对接了。分析这个是真的很折磨人。。。</font></br>
 
+----
+
 ### 检测调试器
 
 &emsp;&emsp;<font size=2>我有很多时间都是花在了这里，VMProtect的反调试可以说是做的非常全面了，各种各样的反调试手段都有用到，那么在这里我来讲解一下如何拆解这一个个保护手段。在这里感谢并强烈推荐一篇看雪的文章：[反调试技术总结](https://bbs.pediy.com/thread-225740.htm)，不熟悉反调试的话建议先看看这篇文章。</font></br>
@@ -154,10 +156,14 @@ int main()
 
 ![成功](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/VMProtect/VMProtect1.70%E5%88%86%E6%9E%90/screenshot/VMP%E8%B0%83%E8%AF%95%E6%88%90%E5%8A%9F.png)
 
+----
+
 ### 检测虚拟环境
 
 - 其实我这个版本的VMP只有一种，机器码ED的`in eax,bx`特权指令。原理就是，在正常的R3条件下遇到这条指令的程序会触发异常，而虚拟机状态的程序遇到这个会正常执行。绕过方法也有很多，比如修改返回值，或者直接跳过。比较匪夷所思的是Parallels Desktop遇到这个会抛出异常，而VMware会直接运行然后被检测弹窗23333。我是直接跳过了：
 
 ![绕过虚拟机检测](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/VMProtect/VMProtect1.70%E5%88%86%E6%9E%90/screenshot/%E8%B7%B3%E8%BF%87%E8%99%9A%E6%8B%9F%E6%A3%80%E6%B5%8B.png)
+
+----
 
 ### 没了
