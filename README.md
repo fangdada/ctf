@@ -1,7 +1,7 @@
 # How2pwn
 ## Author: Wenhuo
 
-### - github仅作为仓库使用，个人博客：https://fanda.cloud 。CTF系列可能不会再更新了，现在主要更新how2CVE。
+### - github仅作为仓库使用，个人新博客已迁移至：https://fandazh.cn 。老域名已关闭网站，CTF系列可能不会再更新了，现在主要更新how2CVE。
 &nbsp;&nbsp;&nbsp;&nbsp;我个人做过的CTF的bin题收集，有逆向和pwn两个方向。最近主要研究pwn，初学pwn的人建议移步先看看我写的[malloc原理解析](https://github.com/fangdada/ctf/tree/master/how2pwn/MALLOC)，我博客里也有而且博客里至少比github好看2333，下面的题目重复的话说明都涉及了，而且题目放上去的不按难度顺序，所以自行看看难度做吧，题目目录下有个**文件夹how2pwn**，这里面都是讲解要做出这道题目的**前置知识**以及相应的**demo**实现，也就是推荐新手先看的（不是全都有，只有最近复现的题目有，嘻嘻），这样学起来应该比现在清晰一些。那么导航就放在下面了：
 
 ## fastbin
