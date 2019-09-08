@@ -30,7 +30,7 @@ int main()
 
 &emsp;&emsp;<font size=2>jmp之后就是虚拟机的入口代码，如下（注意这一段代码会被反复调用，后续会提及）：</font></br>
 
-![虚拟机入口](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/VMProtect/VMProtect1.09%E5%88%86%E6%9E%90/VMProtect1.09%E5%88%86%E6%9E%90/screenshot/%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%85%A5%E5%8F%A3.png)
+![虚拟机入口](https://raw.githubusercontent.com/fangdada/ctf/master/how2reverse/VMProtect/VMProtect1.09%E5%88%86%E6%9E%90/screenshot/%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%85%A5%E5%8F%A3.png)
 
 &emsp;&emsp;<font size=2>注意上面的push并不是压入了一个随机数，而是一个有意义的key，包括后来你看到的push xxxx都是表面上无意义但实际上都有被用来计算地址，这也是vmp的一种加密吧。我们继续往下看，这是一个非常经典的虚拟机循环，取出字节码跳到对应的handler：</font></br>
 
