@@ -100,11 +100,11 @@ while(s.check()==sat):
 
 &emsp;&emsp;<font size=2>先用IDA看了一下，发现符号表被去除了，连基本的printf函数都看不到了，因此改用x64dbg进行动态调试（不用OD是因为插件太多了，总感觉逆起来不痛快），接收字符串和长度判断见如下图：</font></br>
 
-![]()
+![read函数](https://raw.githubusercontent.com/fangdada/ctf/master/护网杯2019/screenshot/read函数.png)
 
 &emsp;&emsp;<font size=2>这里一个`cmp dword ptr ss:[ebp-48],15`判断了是否输入了0x15个字节，且在后来还验证了输入的格式必须为`flag{xxxxx}`这样。然后如下函数：</font></br>
 
-![]()
+![rand函数](https://raw.githubusercontent.com/fangdada/ctf/master/护网杯2019/screenshot/rand函数.png)
 
 &emsp;&emsp;<font size=2>其实是一个`rand()`函数，先以我们输入的某三个字节用作`srand()`的种子，然后后续用`rand()`不断获取随机值来做hash运算。代码还原后如下：</font></br>
 
@@ -234,7 +234,7 @@ f.close()
 
 &emsp;&emsp;<font size=2>然后就开始漫漫爆破了，结果令我吃惊，出现了数量非常多的解！我盯着看了`s.add(result==flag_array[i])`很久，打算验证一下这些输出，于是我取出了其中一个flag解：`key：30606c。flag:3363331402670b2b4d49080d`。然后代入了题，在`rand()`处下断把输入通过二进制编辑改为了以上一个解，结果却跟目标密文大不相同：</font></br>
 
-![]()
+![反代](https://raw.githubusercontent.com/fangdada/ctf/master/护网杯2019/screenshot/反代.png)
 
 ```python
 flag_array=[0x215,0x111,0x101,0x167,0x3E7,0x235,0x2DB,0x139,0x2E1,0x1FD,0x34F,0x1ED]
@@ -244,7 +244,7 @@ output_array=[0x17D,0xCD,0xD9,0x191,0x1CB,0x1D9,0x161,0x63,0x13B,0x1CB,0x171,0xE
 
 &emsp;&emsp;<font size=2>可以看到有很大的差异。接下来我们证明一下不是我脚本的问题，以自己的key和flag为例（全1），首先对题目程序输入`flag{111111111111111}`，然后运行断在cmp比较flag处，然后提取出hash结果为：</font></br>
 
-![]()
+![提取1](https://raw.githubusercontent.com/fangdada/ctf/master/护网杯2019/screenshot/提取1.png)
 
 ```python
 flag_array=[0x104,0x84,0x84,0x0,0x1A6,0x1CC,0x1CC,0x148,0x1C8,0xE2,0xE2,0x126]         #'111'
@@ -398,7 +398,7 @@ while(key <= 0x7A7A7A):
 
 &emsp;&emsp;<font size=2>把上面这个解再次代入到题目里面，给出的结果如下：</font></br>
 
-![]()
+![修改输入](https://raw.githubusercontent.com/fangdada/ctf/master/护网杯2019/screenshot/修改输入.png)
 
 ```python
 flag_array=[0x104,0x84,0x84,0x0,0x1A6,0x1CC,0x1CC,0x148,0x1C8,0xE2,0xE2,0x126]
