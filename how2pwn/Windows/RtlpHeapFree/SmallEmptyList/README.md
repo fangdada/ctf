@@ -355,7 +355,47 @@ ntdll!RtlpFreeHeap+0xa6a:
 77e026e0 e9a458fbff      jmp     ntdll!RtlpFreeHeap+0xf9 (77db7f89)
 ```
 
-&emsp;&emsp;<font size=2>然后我们继续往下走，解密第二个4字节：</font></br>
+&emsp;&emsp;<font size=2>然后我们继续往下走，判断上一个堆块是否为占用态：</font></br>
+
+```
+eax=00000001 ebx=013104a0 ecx=00000001 edx=00000002 esi=013104b0 edi=01310000
+eip=77db808c esp=00def818 ebp=00def910 iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+ntdll!RtlpFreeHeap+0x1fc:
+77db808c 0fb64752        movzx   eax,byte ptr [edi+52h]     ds:002b:01310052=f6
+0:000> 
+eax=000000f6 ebx=013104a0 ecx=00000001 edx=00000002 esi=013104b0 edi=01310000
+eip=77db8090 esp=00def818 ebp=00def910 iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+ntdll!RtlpFreeHeap+0x200:
+77db8090 23c8            and     ecx,eax
+0:000> 
+eax=000000f6 ebx=013104a0 ecx=00000000 edx=00000002 esi=013104b0 edi=01310000
+eip=77db8092 esp=00def818 ebp=00def910 iopl=0         nv up ei pl zr na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000246
+ntdll!RtlpFreeHeap+0x202:
+77db8092 0fb64602        movzx   eax,byte ptr [esi+2]       ds:002b:013104b2=f7
+0:000> 
+eax=000000f7 ebx=013104a0 ecx=00000000 edx=00000002 esi=013104b0 edi=01310000
+eip=77db8096 esp=00def818 ebp=00def910 iopl=0         nv up ei pl zr na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000246
+ntdll!RtlpFreeHeap+0x206:
+77db8096 33c8            xor     ecx,eax
+0:000> 
+eax=000000f7 ebx=013104a0 ecx=000000f7 edx=00000002 esi=013104b0 edi=01310000
+eip=77db8098 esp=00def818 ebp=00def910 iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+ntdll!RtlpFreeHeap+0x208:
+77db8098 83e101          and     ecx,1
+0:000> 
+eax=000000f7 ebx=013104a0 ecx=00000001 edx=00000002 esi=013104b0 edi=01310000
+eip=77db809b esp=00def818 ebp=00def910 iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+ntdll!RtlpFreeHeap+0x20b:
+77db809b 0f85c3010000    jne     ntdll!RtlpFreeHeap+0x3d4 (77db8264)     [br=1]
+```
+
+&emsp;&emsp;<font size=2>然后再往下看，就是解密第二个4字节的部分了：</font></br>
 
 ```
 0:000> 
