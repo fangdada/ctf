@@ -1015,6 +1015,8 @@ ntdll!RtlpFreeHeap+0xb24:
 ```
 &emsp;&emsp;<font size=2>熟悉unsafe unlink的同学肯定一眼就能看懂上面这些利用技巧，然后事实上也成功过了第一层校验，然而高兴得太早了。</font></br>
 &emsp;&emsp;<font size=2>执行流一直往下到了脱钩操作`PreChunk->Flink->Blink=PreChunk->Blink->Flink`时，因为我们已经修改了第一个堆块的`Flink`和`Blink`指针，因此的确是完成了一次DWORD SHOOT：`*(unsigned int*)&Array[8]=&Array[12]`，但是也因此使第一个堆块未能正常脱钩。</font></br>
+
+```
 0:000> 
 eax=00683888 ebx=01570490 ecx=0068388c edx=00000000 esi=015704a0 edi=01570000
 eip=7752e0a3 esp=012ffaa0 ebp=012ffb68 iopl=0         nv up ei pl zr na pe cy
@@ -1046,6 +1048,8 @@ ntdll!RtlpFreeHeap+0x438:
  [ 0x1570498 - 0x15704d8 ]
    +0x000 Flink            : 0x01570498 _LIST_ENTRY [ 0x683888 - 0x68388c ]
    +0x004 Blink            : 0x015704d8 _LIST_ENTRY [ 0x15700c0 - 0x1570498 ]
+```
+
 &emsp;&emsp;<font size=2>最后仍然校验了第一个堆块的`HeapCookie`，而第一个堆块的堆块头已经是合并后的新大小，因此不可能满足条件：</font></br>
 
 ```
