@@ -6,6 +6,7 @@
 >
 > 调试器：Windbg
 
+&emsp;&emsp;<font size=2>**如果不想看调试过程的话可以直接去最下面看结果**。</font></br>
 &emsp;&emsp;<font size=2>首先我们先熟悉一下Windows下的unlink做了哪些工作（**注：windbg记录基址可能不同，只需要看偏移就行了**）：</font></br>
 
 ```C
