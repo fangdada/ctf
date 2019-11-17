@@ -1,5 +1,3 @@
-[TOC]
-
 ### unsorted-bin attack
 
 &emsp;&emsp;<font size=2>好久没来写how2pwn了，这一次是因为论文要用到，所以必须得抓紧时间复习一下。顺便重拾一下以前拼命想学现在却有些反感的东西，多学点，万一以后真成大佬了呢？</font></br>
