@@ -275,9 +275,9 @@ p->fd = old2 = old;
 catomic_compare_and_exchange_val_rel (fb, p, old2)
 ```
 
-&emsp;&emsp;<font size=2>这里的fb指向我们的试图修改的数据，是我们释放的堆块的size经过`fastbin_index`和`fastbin`两个宏计算得到的地址，而p就是我们刚释放的堆块，然后完成了一个`mov [fb],p`的操作。如果堆块可以执行的话我们可以直接让fb指向`\_\_free\_hook`，然后在p上放上我们的shellcode就行了，不过注意这里的p是指向堆块头部而不是主体，而且之前的`p->fd = old`会重写fd，所以我们可以创建一个重叠堆块，在修改完`\_\_free\_hook`后覆盖p地址为shellcode，这样下次free的时候就能执行shellcode了。</font></br>
+&emsp;&emsp;<font size=2>这里的fb指向我们的试图修改的数据，是我们释放的堆块的size经过`fastbin_index`和`fastbin`两个宏计算得到的地址，而p就是我们刚释放的堆块，然后完成了一个`mov [fb],p`的操作。如果堆块可以执行的话我们可以直接让fb指向`__free_hook`，然后在p上放上我们的shellcode就行了，不过注意这里的p是指向堆块头部而不是主体，而且之前的`p->fd = old`会重写fd，所以我们可以创建一个重叠堆块，在修改完`__free_hook`后覆盖p地址为shellcode，这样下次free的时候就能执行shellcode了。</font></br>
 
-&emsp;&emsp;<font size=2>在实际中可以用来劫持`vtable`或者整个`\_IO\_FILE`结构，`\_\_free\_hook`的话可能遇不到可以直接执行shellcode的情况，但是这里就不展开讲了，因为这一节主要是讲unsortedbin，不能跑太偏，一切简单为主，`global_max_fast`的利用demo就放下面了：</font></br>
+&emsp;&emsp;<font size=2>在实际中可以用来劫持`vtable`或者整个`_IO_FILE`结构，`__free_hook`的话可能遇不到可以直接执行shellcode的情况，但是这里就不展开讲了，因为这一节主要是讲unsortedbin，不能跑太偏，一切简单为主，`global_max_fast`的利用demo就放下面了：</font></br>
 
 ```C
 #include <stdio.h>
