@@ -1,3 +1,7 @@
+[TOC]
+
+### unsorted-bin attack
+
 &emsp;&emsp;<font size=2>好久没来写how2pwn了，这一次是因为论文要用到，所以必须得抓紧时间复习一下。顺便重拾一下以前拼命想学现在却有些反感的东西，多学点，万一以后真成大佬了呢？</font></br>
 
 &emsp;&emsp;<font size=2>unsortedbin的原理其实非常简单，就是利用了unsortedbin脱钩的操作来达到一次任意地址写，但是也只能是一次，利用完成后unsortedbin list就废了，然后我们从shellphish的一个最简单的demo入手：</font></br>
@@ -203,9 +207,11 @@ int main(){
 }
 ```
 
+
+
 ----
 
-### unsortedbin attack to global_max_fast
+### expolit global_max_fast
 
 &emsp;&emsp;<font size=2>按照惯例，每次分析完了之后都要来一些甜品技术，这里就列一个利用`unsortedbin attack`任意地址写到`global_max_fast`来实现可控的利用吧，技术原理其实看过两部曲和上面这篇文章之后就可以理解了。</font></br>
 
