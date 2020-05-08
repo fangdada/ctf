@@ -6,19 +6,19 @@ table=[0x16,0x0,0x6,0x2,0x1E,0x18,0x9,0x1,0x15,0x7,0x12,0x0A,0x8,0x0C,0x11,0x17,
 
 dic = {104:'a',30:'b',15:'c',29:'d',169:'e',19:'f',38:'g',67:'h',60:'i',0:'j',20:'k',39:'l',28:'m',118:'n',165:'o',26:'p',0:'p',61:'r',51:'s',133:'t',45:'u',7:'v',34:'w',0:'x',62:'y',0:'z',245:'_'}
 
-#first recover:
+# reverse move_crypto
 recover=[]
 recover.append(((key[37]<<5)&0xff)|(key[0]>>3))
 for i in range(1,38):
   recover.append((key[i]>>3)|((key[i-1]<<5)&0xff))
 
-#second recover:
+# reverse replace_crypto
 i=1
 for x in range(0,38):
   recover[table[i]]=recover[i]
   i=table.index(i)
 
-#and return to flag:
+# reverse char_to_index
 flag=''
 for i in recover:
   flag+=dic[i]
